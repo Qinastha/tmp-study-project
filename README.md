@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# АИТ Study Reader
 
-## Getting Started
+Next.js + Tailwind + shadcn/ui reader for the АИТ exam notes. The app reads structured themes and paragraph blocks from Supabase and supports shared comments on a whole theme or an exact paragraph/block.
 
-First, run the development server:
+## Local Setup
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000/themes.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`.env.local` contains the public Supabase URL/key from the prompt. Runtime comments use the database-owned `create_comment` RPC, so Vercel does not need a service-role key.
 
-## Learn More
+Schema and content are managed through Supabase MCP.
 
-To learn more about Next.js, take a look at the following resources:
+Export a fresh content payload:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run content:export
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Then use MCP to call `app_private.upsert_study_reader_content` with `tmp/study-content-payload.json`.
+See [docs/mcp-content-update-guide.md](docs/mcp-content-update-guide.md) for the safe persistence workflow.
 
-## Deploy on Vercel
+## Verification
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run source:verify
+npm run test
+npm run lint
+npm run build
+npm run test:e2e
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The seeded-reader Playwright test is skipped until `E2E_SUPABASE_READY=1` is set against a migrated and seeded project.
+
+## Vercel Env
+
+Set these in Vercel Project Settings:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+```
+
+No service-role key is needed for normal Vercel runtime.
