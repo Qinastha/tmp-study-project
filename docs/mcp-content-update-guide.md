@@ -4,11 +4,21 @@ Use this when study text changes and existing user comments must remain attached
 
 ## Current Persistence Model
 
-- `source_documents` stores the source PDF/Markdown metadata and hashes.
+- `content/source.md` is the only canonical source for parser, export, and MCP seed data.
+- `source_documents` stores Markdown source metadata and hashes.
 - `themes` stores one visible reader section per row. `theme_key` is the stable identity; `title`, `slug`, and `sort_order` may change.
 - `theme_content_blocks` stores commentable headings, paragraphs, and bullets. `block_key` is the stable identity used for upserts.
 - `comments` stores user comments and points to either `themes.id` or `theme_content_blocks.id`.
 - Routine content updates set old themes/blocks `is_active = false` instead of deleting them, so comments remain recoverable if a block is restored later.
+
+## Runtime Cache Model
+
+- Stable content is cached separately from comments.
+- Themes and blocks use a long cache TTL: 24 hours.
+- Comments also use a long cache TTL: 24 hours.
+- Comments are cached per theme, not as arbitrary theme-id bundles.
+- New comments created through the app invalidate only that theme's comment cache.
+- MCP content updates must call the protected revalidation endpoint immediately after the Supabase upsert, because content cache is intentionally long-lived to reduce Supabase and Vercel usage.
 
 ## Rules For Preserving Comments
 
@@ -18,24 +28,33 @@ Use this when study text changes and existing user comments must remain attached
 - Keep `block_key` stable for a paragraph/heading/bullet when the same conceptual block is edited.
 - If a block is deleted from the source, let the MCP upsert function mark it inactive. Do not hard-delete it unless you have confirmed it has no comments.
 - If you must split one paragraph into two, keep the old `block_key` on the paragraph that best preserves the original comment context and create one new key for the new block.
+- Keep source theme numbers in `content/source.md` when useful for review, but omit those numbers from Supabase display titles during export. Stable keys such as `theme-04` preserve the source numbering identity.
 
 ## Update Workflow
 
-1. Update the Markdown/PDF source outside the app.
-2. Run:
+1. Review current comments in Supabase and decide which content changes belong in the source.
+2. Update `content/source.md`.
+3. Verify and export Markdown-derived payload:
 
 ```bash
 npm run source:verify
 npm run content:export
 ```
 
-3. In Supabase MCP, call the private maintenance function with the generated payload from `tmp/study-content-payload.json`:
+4. In Supabase MCP, call the private maintenance function with the generated payload from `tmp/study-content-payload.json`:
 
 ```sql
 select app_private.upsert_study_reader_content('<payload-json>'::jsonb);
 ```
 
-4. Verify counts and inactive rows:
+5. Immediately revalidate the deployed reader cache. The app caches stable themes/blocks for a day to avoid draining Supabase request limits, so MCP pushes must invalidate the cache explicitly:
+
+```bash
+curl -X POST "https://tmp-study-project.vercel.app/api/revalidate" \
+  -H "x-revalidate-secret: $REVALIDATE_SECRET"
+```
+
+6. Verify counts and inactive rows:
 
 ```sql
 select
@@ -44,9 +63,11 @@ select
   (select count(*) from public.comments) as comments;
 ```
 
-5. Run the local sanity suite:
+7. Run the local sanity suite:
 
 ```bash
+npm run source:verify
+npm run content:export
 npm run test
 npm run lint
 npm run build

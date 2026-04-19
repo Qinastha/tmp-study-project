@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { getThemeCommentsCacheTag } from "@/lib/content/cache-policy";
 import { commentSchema, type CommentActionState } from "@/lib/validation/comments";
 
 export async function createComment(
@@ -42,7 +43,7 @@ export async function createComment(
     };
   }
 
-  revalidatePath("/themes");
+  updateTag(getThemeCommentsCacheTag(parsed.data.themeId));
 
   return {
     ok: true,

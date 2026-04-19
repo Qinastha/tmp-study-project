@@ -171,12 +171,6 @@ export function parseStudyMarkdown(markdown: string): ParsedDocument {
 
   flushParagraph();
 
-  for (const theme of themes) {
-    if (theme.themeKey === "guide") {
-      theme.blocks = makeGuideBlocks(theme);
-    }
-  }
-
   const finalizedThemes = themes.map((theme) => ({
     ...theme,
     contentHash: sha256(theme.blocks.map((block) => block.contentHash).join(":")),
@@ -225,34 +219,6 @@ interface ThemeMeta {
   title: string;
 }
 
-const GUIDE_BLOCKS: Array<Pick<ParsedBlock, "kind" | "headingLevel" | "text">> = [
-  {
-    kind: "paragraph",
-    headingLevel: null,
-    text: "Этот сайт заменяет простой PDF: темы читаются по одной или одним длинным списком, а комментарии привязаны к конкретной теме или абзацу.",
-  },
-  {
-    kind: "bullet",
-    headingLevel: null,
-    text: "В режиме одной темы используйте навигацию назад/далее, чтобы идти по материалу без отвлечений.",
-  },
-  {
-    kind: "bullet",
-    headingLevel: null,
-    text: "В режиме всех тем удобно быстро повторять материал подряд и видеть те же комментарии возле соответствующих абзацев.",
-  },
-  {
-    kind: "bullet",
-    headingLevel: null,
-    text: "Значок комментария возле блока показывает, что к этому месту уже есть заметки; на компьютере короткие комментарии видны рядом с текстом, на телефоне - под блоком.",
-  },
-  {
-    kind: "bullet",
-    headingLevel: null,
-    text: "Комментарии общие для всех читателей: оставляйте уточнения, вопросы и клинические акценты так, чтобы они помогали следующему человеку.",
-  },
-];
-
 function getThemeMeta(rawTitle: string, sourceIndex: number): ThemeMeta | null {
   if (/^1\.\s*Нормативная карта экзамена/.test(rawTitle)) {
     return null;
@@ -290,17 +256,6 @@ function getThemeMeta(rawTitle: string, sourceIndex: number): ThemeMeta | null {
     slug: slugify(rawTitle),
     title: rawTitle,
   };
-}
-
-function makeGuideBlocks(theme: MutableTheme): ParsedBlock[] {
-  return GUIDE_BLOCKS.map((block, index) => ({
-    blockKey: `${theme.themeKey}-${String(index + 1).padStart(3, "0")}`,
-    kind: block.kind,
-    headingLevel: block.headingLevel,
-    text: block.text,
-    sortOrder: index + 1,
-    contentHash: sha256(`${block.kind}:${block.headingLevel ?? ""}:${block.text}`),
-  }));
 }
 
 function normalizeText(text: string): string {

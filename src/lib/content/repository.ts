@@ -1,6 +1,14 @@
-import { unstable_noStore as noStore } from "next/cache";
+import { unstable_cache } from "next/cache";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
-import { createClient } from "@/lib/supabase/server";
+import {
+  COMMENTS_CACHE_REVALIDATE_SECONDS,
+  COMMENTS_CACHE_TAG,
+  CONTENT_CACHE_REVALIDATE_SECONDS,
+  CONTENT_CACHE_TAG,
+  getThemeCommentsCacheTag,
+} from "@/lib/content/cache-policy";
+import type { Database } from "@/types/database";
 import type { CommentRow, ContentBlockRow, ThemeRow } from "@/types/database";
 
 export interface ReaderTheme extends ThemeRow {
@@ -13,80 +21,158 @@ export interface ReaderData {
   error: string | null;
 }
 
-export async function getReaderData(): Promise<ReaderData> {
-  noStore();
-  const supabase = await createClient();
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  const { data: themes, error: themeError } = await supabase
-    .from("themes")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+function createPublicSupabaseClient() {
+  return createSupabaseClient<Database>(supabaseUrl!, supabaseKey!, {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+    },
+  });
+}
 
-  if (themeError) {
-    return { themes: [], error: themeError.message };
-  }
+const getCachedReaderContent = unstable_cache(
+  async () => {
+    const supabase = createPublicSupabaseClient();
 
-  if (!themes || themes.length === 0) {
-    return { themes: [], error: null };
-  }
+    const { data: themes, error: themeError } = await supabase
+      .from("themes")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
 
-  const themeIds = themes.map((theme) => theme.id);
+    if (themeError) {
+      throw new Error(themeError.message);
+    }
 
-  const [{ data: blocks, error: blockError }, { data: comments, error: commentError }] =
-    await Promise.all([
-      supabase
-        .from("theme_content_blocks")
-        .select("*")
-        .in("theme_id", themeIds)
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true }),
-      supabase
+    if (!themes || themes.length === 0) {
+      return [];
+    }
+
+    const themeIds = themes.map((theme) => theme.id);
+    const { data: blocks, error: blockError } = await supabase
+      .from("theme_content_blocks")
+      .select("*")
+      .in("theme_id", themeIds)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (blockError) {
+      throw new Error(blockError.message);
+    }
+
+    const blocksByThemeId = groupByThemeId(blocks ?? []);
+
+    return themes.map((theme) => ({
+      ...theme,
+      blocks: blocksByThemeId.get(theme.id) ?? [],
+      comments: [],
+    })) satisfies ReaderTheme[];
+  },
+  ["study-reader-active-content"],
+  {
+    revalidate: CONTENT_CACHE_REVALIDATE_SECONDS,
+    tags: [CONTENT_CACHE_TAG],
+  },
+);
+
+function getCachedVisibleCommentsForTheme(themeId: string) {
+  return unstable_cache(
+    async () => {
+      const supabase = createPublicSupabaseClient();
+      const { data, error } = await supabase
         .from("comments")
         .select("*")
-        .in("theme_id", themeIds)
+        .eq("theme_id", themeId)
         .eq("status", "visible")
-        .order("created_at", { ascending: true }),
-    ]);
+        .order("created_at", { ascending: true });
 
-  if (blockError || commentError) {
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data ?? [];
+    },
+    ["study-reader-visible-comments", themeId],
+    {
+      revalidate: COMMENTS_CACHE_REVALIDATE_SECONDS,
+      tags: [COMMENTS_CACHE_TAG, getThemeCommentsCacheTag(themeId)],
+    },
+  )();
+}
+
+export async function getReaderData(): Promise<ReaderData> {
+  try {
+    const themes = await getCachedReaderContent();
+
+    if (themes.length === 0) {
+      return { themes: [], error: null };
+    }
+
+    const comments = await getVisibleComments(themes.map((theme) => theme.id));
+
+    return {
+      themes: attachComments(themes, comments),
+      error: null,
+    };
+  } catch (error) {
     return {
       themes: [],
-      error: blockError?.message ?? commentError?.message ?? "Failed to load reader data.",
+      error: error instanceof Error ? error.message : "Failed to load reader data.",
     };
   }
-
-  return {
-    themes: themes.map((theme) => ({
-      ...theme,
-      blocks: (blocks ?? []).filter((block) => block.theme_id === theme.id),
-      comments: (comments ?? []).filter((comment) => comment.theme_id === theme.id),
-    })),
-    error: null,
-  };
 }
 
 export async function getSingleTheme(slug: string) {
-  const data = await getReaderData();
+  try {
+    const themes = await getCachedReaderContent();
 
-  if (data.error || data.themes.length === 0) {
+    if (themes.length === 0) {
+      return {
+        themes: [],
+        error: null,
+        theme: null,
+        previousTheme: null,
+        nextTheme: null,
+      };
+    }
+
+    const index = themes.findIndex((theme) => theme.slug === slug);
+    const theme = index >= 0 ? themes[index] : null;
+
+    if (!theme) {
+      return {
+        themes,
+        error: null,
+        theme: null,
+        previousTheme: null,
+        nextTheme: null,
+      };
+    }
+
+    const comments = await getVisibleComments([theme.id]);
+
+    const themesWithComments = attachComments(themes, comments);
+
     return {
-      ...data,
+      themes: themesWithComments,
+      error: null,
+      theme: themesWithComments[index],
+      previousTheme: index > 0 ? themesWithComments[index - 1] : null,
+      nextTheme: index >= 0 && index < themesWithComments.length - 1 ? themesWithComments[index + 1] : null,
+    };
+  } catch (error) {
+    return {
+      themes: [],
+      error: error instanceof Error ? error.message : "Failed to load reader data.",
       theme: null,
       previousTheme: null,
       nextTheme: null,
     };
   }
-
-  const index = data.themes.findIndex((theme) => theme.slug === slug);
-  const theme = index >= 0 ? data.themes[index] : null;
-
-  return {
-    ...data,
-    theme,
-    previousTheme: index > 0 ? data.themes[index - 1] : null,
-    nextTheme: index >= 0 && index < data.themes.length - 1 ? data.themes[index + 1] : null,
-  };
 }
 
 export function countComments(
@@ -100,4 +186,53 @@ export function countComments(
 
     return comment.theme_id === target.themeId && comment.theme_content_block_id === null;
   }).length;
+}
+
+async function getVisibleComments(themeIds: string[]) {
+  if (themeIds.length === 0) {
+    return [];
+  }
+
+  const settledComments = await Promise.allSettled(
+    normalizeThemeIds(themeIds).map((themeId) => getCachedVisibleCommentsForTheme(themeId)),
+  );
+
+  return settledComments.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
+}
+
+function normalizeThemeIds(themeIds: string[]) {
+  return [...new Set(themeIds)].sort();
+}
+
+function groupByThemeId(blocks: ContentBlockRow[]) {
+  const blocksByThemeId = new Map<string, ContentBlockRow[]>();
+
+  for (const block of blocks) {
+    const themeBlocks = blocksByThemeId.get(block.theme_id) ?? [];
+    themeBlocks.push(block);
+    blocksByThemeId.set(block.theme_id, themeBlocks);
+  }
+
+  return blocksByThemeId;
+}
+
+function attachComments(themes: ReaderTheme[], comments: CommentRow[]) {
+  const commentsByThemeId = groupCommentsByThemeId(comments);
+
+  return themes.map((theme) => ({
+    ...theme,
+    comments: commentsByThemeId.get(theme.id) ?? [],
+  }));
+}
+
+function groupCommentsByThemeId(comments: CommentRow[]) {
+  const commentsByThemeId = new Map<string, CommentRow[]>();
+
+  for (const comment of comments) {
+    const themeComments = commentsByThemeId.get(comment.theme_id) ?? [];
+    themeComments.push(comment);
+    commentsByThemeId.set(comment.theme_id, themeComments);
+  }
+
+  return commentsByThemeId;
 }

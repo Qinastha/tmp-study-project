@@ -61,3 +61,52 @@ test("block comment affordance remains visible on mobile and desktop", async ({ 
   await page.goto("/themes");
   await expect(page.getByLabel("Комментарии к блоку").first()).toBeVisible();
 });
+
+test("abbreviation definitions open on hover or tap", async ({ page, isMobile }) => {
+  test.skip(!process.env.E2E_SUPABASE_READY, "Requires migrated and seeded Supabase project.");
+
+  await page.goto("/themes");
+  const abbreviation = page.locator('[data-abbreviation-term="ABCDE"]').first();
+  const definition = page
+    .locator('[data-abbreviation-popover-content]')
+    .filter({ hasText: "расширенный первичный осмотр" })
+    .first();
+
+  await expect(abbreviation).toBeVisible();
+  if (isMobile) {
+    await abbreviation.tap();
+  } else {
+    await abbreviation.hover();
+  }
+
+  await expect(definition).toBeVisible();
+  await page.waitForTimeout(900);
+  await expect(definition).toBeVisible();
+
+  if (!isMobile) {
+    await definition.hover();
+    await page.waitForTimeout(250);
+    await expect(definition).toBeVisible();
+  }
+});
+
+test("reader has no horizontal overflow across key responsive sizes", async ({ page }) => {
+  test.skip(!process.env.E2E_SUPABASE_READY, "Requires migrated and seeded Supabase project.");
+
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1024, height: 768 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/themes");
+    await expect(page.getByText(/АИТ/).first()).toBeVisible();
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+  }
+});

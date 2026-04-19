@@ -14,9 +14,8 @@ export interface Database {
           id: string;
           title: string;
           source_path: string;
-          pdf_sha256: string;
+          source_sha256: string;
           content_sha256: string;
-          page_count: number | null;
           revision_date: string | null;
           metadata: Json;
           created_at: string;
@@ -26,9 +25,8 @@ export interface Database {
           id?: string;
           title: string;
           source_path: string;
-          pdf_sha256: string;
+          source_sha256: string;
           content_sha256: string;
-          page_count?: number | null;
           revision_date?: string | null;
           metadata?: Json;
           created_at?: string;

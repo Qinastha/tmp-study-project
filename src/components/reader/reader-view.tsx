@@ -29,6 +29,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AbbreviatedText } from "@/components/reader/abbreviated-text";
+import {
+  type AbbreviationDefinition,
+  extractAbbreviations,
+} from "@/lib/content/abbreviations";
 import { createClient } from "@/lib/supabase/client";
 import type { ReaderTheme } from "@/lib/content/repository";
 import type { CommentRow, ContentBlockRow } from "@/types/database";
@@ -49,6 +54,7 @@ export function ReaderView({ themes, mode, selectedSlug }: ReaderViewProps) {
   const selectedTheme = themes.find((theme) => theme.slug === selectedSlug) ?? themes[0];
   const selectedIndex = themes.findIndex((theme) => theme.id === selectedTheme?.id);
   const visibleThemes = mode === "single" && selectedTheme ? [selectedTheme] : themes;
+  const abbreviations = useMemo(() => extractAbbreviations(themes), [themes]);
   const totalBlocks = useMemo(
     () => themes.reduce((sum, theme) => sum + theme.blocks.length, 0),
     [themes],
@@ -105,7 +111,7 @@ export function ReaderView({ themes, mode, selectedSlug }: ReaderViewProps) {
           <ThemeNav themes={themes} selectedSlug={selectedTheme?.slug} />
         </aside>
 
-        <div className="min-w-0 px-4 py-6 sm:px-8 lg:px-12">
+        <div className="min-w-0 px-4 py-6 [overflow-wrap:anywhere] sm:px-8 lg:px-12">
           <section className="mb-8 flex flex-col gap-4 border-b pb-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
@@ -160,6 +166,7 @@ export function ReaderView({ themes, mode, selectedSlug }: ReaderViewProps) {
                 key={theme.id}
                 theme={theme}
                 comments={comments.filter((comment) => comment.theme_id === theme.id)}
+                abbreviations={abbreviations}
                 onOpenComments={openComments}
               />
             ))}
@@ -181,10 +188,12 @@ export function ReaderView({ themes, mode, selectedSlug }: ReaderViewProps) {
 function ThemeArticle({
   theme,
   comments,
+  abbreviations,
   onOpenComments,
 }: {
   theme: ReaderTheme;
   comments: CommentRow[];
+  abbreviations: AbbreviationDefinition[];
   onOpenComments: (target: CommentTarget) => void;
 }) {
   const themeCommentCount = commentsForTarget(comments, {
@@ -232,6 +241,7 @@ function ThemeArticle({
             block={block}
             theme={theme}
             comments={comments}
+            abbreviations={abbreviations}
             onOpenComments={onOpenComments}
           />
         ))}
@@ -244,11 +254,13 @@ function ContentBlock({
   block,
   theme,
   comments,
+  abbreviations,
   onOpenComments,
 }: {
   block: ContentBlockRow;
   theme: ReaderTheme;
   comments: CommentRow[];
+  abbreviations: AbbreviationDefinition[];
   onOpenComments: (target: CommentTarget) => void;
 }) {
   const count = commentsForTarget(comments, {
@@ -270,7 +282,10 @@ function ContentBlock({
     <div id={block.block_key} className="group scroll-mt-24 rounded-lg px-2 py-2 transition-colors hover:bg-muted/45">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(168px,220px)]">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
-          <BlockText block={block} />
+          <BlockText
+            block={block}
+            abbreviations={theme.theme_key === "abbreviations" ? [] : abbreviations}
+          />
           <div className="pt-0.5 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
             <CommentButton count={count} label="Комментарии к блоку" onClick={() => onOpenComments(target)} />
           </div>
@@ -284,20 +299,28 @@ function ContentBlock({
   );
 }
 
-function BlockText({ block }: { block: ContentBlockRow }) {
+function BlockText({
+  block,
+  abbreviations,
+}: {
+  block: ContentBlockRow;
+  abbreviations: AbbreviationDefinition[];
+}) {
+  const content = <AbbreviatedText text={block.text} abbreviations={abbreviations} />;
+
   if (block.kind === "heading") {
-    return <h3 className="mt-5 text-xl font-semibold tracking-tight text-primary">{block.text}</h3>;
+    return <h3 className="mt-5 text-xl font-semibold tracking-tight text-primary">{content}</h3>;
   }
 
   if (block.kind === "bullet") {
     return (
       <p className="relative pl-5 text-[1.02rem] leading-8 text-foreground/90 before:absolute before:left-0 before:top-[0.82rem] before:size-1.5 before:rounded-full before:bg-primary/75">
-        {block.text}
+        {content}
       </p>
     );
   }
 
-  return <p className="text-[1.02rem] leading-8 text-foreground/90">{block.text}</p>;
+  return <p className="text-[1.02rem] leading-8 text-foreground/90">{content}</p>;
 }
 
 function ThemeNav({ themes, selectedSlug }: { themes: ReaderTheme[]; selectedSlug?: string }) {

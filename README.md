@@ -17,9 +17,11 @@ Open http://localhost:3000/themes.
 
 Schema and content are managed through Supabase MCP.
 
-Export a fresh content payload:
+The canonical source is `content/source.md`. Supabase content is exported from this Markdown file only.
+PDF files are not part of the update flow.
 
 ```bash
+npm run source:verify
 npm run content:export
 ```
 
@@ -45,6 +47,11 @@ Set these in Vercel Project Settings:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+REVALIDATE_SECRET
 ```
 
 No service-role key is needed for normal Vercel runtime.
+
+Reader themes and blocks are cached to avoid repeated Supabase reads during normal study sessions.
+Comments are also cached per theme for 24 hours, and comment writes invalidate only the touched theme.
+After MCP content updates, immediately call `POST https://tmp-study-project.vercel.app/api/revalidate` with `x-revalidate-secret: <REVALIDATE_SECRET>` so Vercel serves the new Markdown-derived content immediately.
