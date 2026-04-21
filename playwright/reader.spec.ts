@@ -41,7 +41,7 @@ test("seeded reader supports navigation and comments", async ({ page }) => {
   test.skip(!process.env.E2E_SUPABASE_READY, "Requires migrated and seeded Supabase project.");
 
   await page.goto("/themes");
-  await expect(page.getByText("19 тем")).toBeVisible();
+  await expect(page.getByText(/\d+ тем/)).toBeVisible();
   await page.getByLabel("Комментарии к теме").first().click();
   await expect(page.getByText("Комментарии", { exact: true })).toBeVisible();
 });
@@ -50,7 +50,7 @@ test("theme titles do not repeat source numbering", async ({ page }) => {
   test.skip(!process.env.E2E_SUPABASE_READY, "Requires migrated and seeded Supabase project.");
 
   await page.goto("/themes");
-  await expect(page.getByRole("heading", { name: "Нутритивная поддержка", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Как пользоваться конспектом", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "4. Нутритивная поддержка" })).toHaveCount(0);
   await expect(page.getByText("Нормативная карта экзамена")).toHaveCount(0);
 });

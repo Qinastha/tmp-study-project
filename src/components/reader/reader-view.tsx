@@ -210,6 +210,7 @@ function ThemeArticle({
     title: theme.title,
     subtitle: "Комментарии к теме целиком",
   };
+  const blockSegments = segmentContentBlocks(theme.blocks);
 
   return (
     <article id={theme.slug} className="scroll-mt-24">
@@ -235,19 +236,63 @@ function ThemeArticle({
       </div>
 
       <div className="space-y-2">
-        {theme.blocks.map((block) => (
-          <ContentBlock
-            key={block.id}
-            block={block}
-            theme={theme}
-            comments={comments}
-            abbreviations={abbreviations}
-            onOpenComments={onOpenComments}
-          />
-        ))}
+        {blockSegments.map((segment) =>
+          segment.type === "table" ? (
+            <ContentTable
+              key={segment.blocks.map((block) => block.id).join("-")}
+              blocks={segment.blocks}
+              theme={theme}
+              comments={comments}
+              abbreviations={abbreviations}
+              onOpenComments={onOpenComments}
+            />
+          ) : (
+            <ContentBlock
+              key={segment.block.id}
+              block={segment.block}
+              theme={theme}
+              comments={comments}
+              abbreviations={abbreviations}
+              onOpenComments={onOpenComments}
+            />
+          ),
+        )}
       </div>
     </article>
   );
+}
+
+type ContentBlockSegment =
+  | { type: "block"; block: ContentBlockRow }
+  | { type: "table"; blocks: ContentBlockRow[] };
+
+function segmentContentBlocks(blocks: ContentBlockRow[]): ContentBlockSegment[] {
+  const segments: ContentBlockSegment[] = [];
+  let index = 0;
+
+  while (index < blocks.length) {
+    const block = blocks[index];
+
+    if (!isDelimitedTableBlock(block)) {
+      segments.push({ type: "block", block });
+      index += 1;
+      continue;
+    }
+
+    const tableBlocks: ContentBlockRow[] = [];
+    while (index < blocks.length && isDelimitedTableBlock(blocks[index])) {
+      tableBlocks.push(blocks[index]);
+      index += 1;
+    }
+
+    if (tableBlocks.length >= 2) {
+      segments.push({ type: "table", blocks: tableBlocks });
+    } else {
+      segments.push(...tableBlocks.map((item) => ({ type: "block" as const, block: item })));
+    }
+  }
+
+  return segments;
 }
 
 function ContentBlock({
@@ -263,20 +308,8 @@ function ContentBlock({
   abbreviations: AbbreviationDefinition[];
   onOpenComments: (target: CommentTarget) => void;
 }) {
-  const count = commentsForTarget(comments, {
-    targetType: "block",
-    themeId: theme.id,
-    contentBlockId: block.id,
-    title: block.text,
-    subtitle: theme.title,
-  }).length;
-  const target: CommentTarget = {
-    targetType: "block",
-    themeId: theme.id,
-    contentBlockId: block.id,
-    title: block.kind === "heading" ? block.text : "Комментарий к абзацу",
-    subtitle: theme.title,
-  };
+  const target = blockCommentTarget(block, theme);
+  const count = commentsForTarget(comments, target).length;
 
   return (
     <div id={block.block_key} className="group scroll-mt-24 rounded-lg px-2 py-2 transition-colors hover:bg-muted/45">
@@ -288,6 +321,118 @@ function ContentBlock({
           />
           <div className="pt-0.5 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
             <CommentButton count={count} label="Комментарии к блоку" onClick={() => onOpenComments(target)} />
+          </div>
+        </div>
+        <InlineComments
+          comments={commentsForTarget(comments, target)}
+          onShowAll={() => onOpenComments(target)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ContentTable({
+  blocks,
+  theme,
+  comments,
+  abbreviations,
+  onOpenComments,
+}: {
+  blocks: ContentBlockRow[];
+  theme: ReaderTheme;
+  comments: CommentRow[];
+  abbreviations: AbbreviationDefinition[];
+  onOpenComments: (target: CommentTarget) => void;
+}) {
+  const caption = getDelimitedTableCaption(blocks[0]?.text ?? "");
+
+  return (
+    <div
+      role="table"
+      aria-label={caption ?? "Таблица из конспекта"}
+      data-reader-markdown-table="true"
+      className="my-4 overflow-hidden rounded-lg border bg-card/40 text-sm"
+    >
+      {caption ? (
+        <div className="border-b bg-muted/45 px-3 py-2 font-medium text-foreground">{caption}</div>
+      ) : null}
+      <div className="divide-y">
+        {blocks.map((block, index) => (
+          <ContentTableRow
+            key={block.id}
+            block={block}
+            theme={theme}
+            comments={comments}
+            abbreviations={abbreviations}
+            isHeader={index === 0}
+            onOpenComments={onOpenComments}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ContentTableRow({
+  block,
+  theme,
+  comments,
+  abbreviations,
+  isHeader,
+  onOpenComments,
+}: {
+  block: ContentBlockRow;
+  theme: ReaderTheme;
+  comments: CommentRow[];
+  abbreviations: AbbreviationDefinition[];
+  isHeader: boolean;
+  onOpenComments: (target: CommentTarget) => void;
+}) {
+  const target = blockCommentTarget(block, theme);
+  const count = commentsForTarget(comments, target).length;
+  const cells = getDelimitedTableCells(block.text);
+  const columnStyle = {
+    gridTemplateColumns:
+      cells.length === 4
+        ? "minmax(130px,0.75fr) minmax(190px,1fr) minmax(250px,1.35fr) minmax(270px,1.45fr)"
+        : `repeat(${cells.length}, minmax(160px, 1fr))`,
+  };
+
+  return (
+    <div
+      id={block.block_key}
+      role="row"
+      className={cn(
+        "group scroll-mt-24 px-2 py-2 transition-colors",
+        isHeader ? "bg-muted/55" : "hover:bg-muted/45",
+      )}
+    >
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(168px,220px)]">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3">
+          <div className="min-w-0 overflow-x-auto">
+            <div className="grid min-w-[760px]" style={columnStyle}>
+              {cells.map((cell, cellIndex) => (
+                <div
+                  key={`${block.id}-${cellIndex}`}
+                  role={isHeader ? "columnheader" : "cell"}
+                  className={cn(
+                    "border-r px-3 py-2 last:border-r-0",
+                    isHeader
+                      ? "font-semibold text-foreground"
+                      : "leading-6 text-foreground/90",
+                  )}
+                >
+                  <AbbreviatedText
+                    text={cell}
+                    abbreviations={theme.theme_key === "abbreviations" ? [] : abbreviations}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="pt-1 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
+            <CommentButton count={count} label="Комментарии к строке таблицы" onClick={() => onOpenComments(target)} />
           </div>
         </div>
         <InlineComments
@@ -321,6 +466,57 @@ function BlockText({
   }
 
   return <p className="text-[1.02rem] leading-8 text-foreground/90">{content}</p>;
+}
+
+function blockCommentTarget(block: ContentBlockRow, theme: ReaderTheme): CommentTarget {
+  return {
+    targetType: "block",
+    themeId: theme.id,
+    contentBlockId: block.id,
+    title: block.kind === "heading" ? block.text : "Комментарий к абзацу",
+    subtitle: theme.title,
+  };
+}
+
+function isDelimitedTableBlock(block: ContentBlockRow | undefined) {
+  return block?.kind === "bullet" && getDelimitedTableCells(block.text).length >= 3;
+}
+
+function getDelimitedTableCells(text: string) {
+  const cells = text
+    .split("|")
+    .map((cell) => cell.trim())
+    .filter(Boolean);
+
+  if (cells.length < 3) {
+    return [];
+  }
+
+  const captionDivider = cells[0].lastIndexOf(":");
+  if (captionDivider >= 0) {
+    const header = cells[0].slice(captionDivider + 1).trim();
+    if (header) {
+      cells[0] = header;
+    }
+  }
+
+  return cells;
+}
+
+function getDelimitedTableCaption(text: string) {
+  const firstPipeIndex = text.indexOf("|");
+  if (firstPipeIndex < 0) {
+    return null;
+  }
+
+  const firstCell = text.slice(0, firstPipeIndex).trim();
+  const captionDivider = firstCell.lastIndexOf(":");
+  if (captionDivider < 0) {
+    return null;
+  }
+
+  const caption = firstCell.slice(0, captionDivider).trim();
+  return caption.length > 0 ? caption : null;
 }
 
 function ThemeNav({ themes, selectedSlug }: { themes: ReaderTheme[]; selectedSlug?: string }) {
