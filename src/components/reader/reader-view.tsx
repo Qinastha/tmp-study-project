@@ -20,6 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -355,6 +356,9 @@ function ContentTable({
   onOpenComments: (target: CommentTarget) => void;
 }) {
   const caption = getDelimitedTableCaption(blocks[0]?.text ?? "");
+  const columnCount = Math.max(...blocks.map((block) => getDelimitedTableCells(block.text).length));
+  const columnTemplate = getDelimitedTableColumnTemplate(columnCount);
+  const minWidthClass = getDelimitedTableMinWidthClass(columnCount);
 
   return (
     <div
@@ -366,18 +370,21 @@ function ContentTable({
       {caption ? (
         <div className="border-b bg-muted/45 px-3 py-2 font-medium text-foreground">{caption}</div>
       ) : null}
-      <div className="divide-y">
-        {blocks.map((block, index) => (
-          <ContentTableRow
-            key={block.id}
-            block={block}
-            theme={theme}
-            comments={comments}
-            abbreviations={abbreviations}
-            isHeader={index === 0}
-            onOpenComments={onOpenComments}
-          />
-        ))}
+      <div data-reader-table-scroll className="overflow-x-auto">
+        <div className={cn("divide-y", minWidthClass)}>
+          {blocks.map((block, index) => (
+            <ContentTableRow
+              key={block.id}
+              block={block}
+              theme={theme}
+              comments={comments}
+              abbreviations={abbreviations}
+              isHeader={index === 0}
+              columnTemplate={columnTemplate}
+              onOpenComments={onOpenComments}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -389,6 +396,7 @@ function ContentTableRow({
   comments,
   abbreviations,
   isHeader,
+  columnTemplate,
   onOpenComments,
 }: {
   block: ContentBlockRow;
@@ -396,54 +404,45 @@ function ContentTableRow({
   comments: CommentRow[];
   abbreviations: AbbreviationDefinition[];
   isHeader: boolean;
+  columnTemplate: string;
   onOpenComments: (target: CommentTarget) => void;
 }) {
   const target = blockCommentTarget(block, theme);
   const count = commentsForTarget(comments, target).length;
   const cells = getDelimitedTableCells(block.text);
-  const columnStyle = {
-    gridTemplateColumns:
-      cells.length === 4
-        ? "minmax(130px,0.75fr) minmax(190px,1fr) minmax(250px,1.35fr) minmax(270px,1.45fr)"
-        : `repeat(${cells.length}, minmax(160px, 1fr))`,
-  };
 
   return (
     <div
       id={block.block_key}
       role="row"
       className={cn(
-        "group scroll-mt-24 px-2 py-2 transition-colors",
+        "group relative scroll-mt-24 transition-colors",
         isHeader ? "bg-muted/55" : "hover:bg-muted/45",
       )}
     >
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(168px,220px)]">
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3">
-          <div className="min-w-0 overflow-x-auto">
-            <div className="grid min-w-[760px]" style={columnStyle}>
-              {cells.map((cell, cellIndex) => (
-                <div
-                  key={`${block.id}-${cellIndex}`}
-                  role={isHeader ? "columnheader" : "cell"}
-                  className={cn(
-                    "border-r px-3 py-2 last:border-r-0",
-                    isHeader
-                      ? "font-semibold text-foreground"
-                      : "leading-6 text-foreground/90",
-                  )}
-                >
-                  <AbbreviatedText
-                    text={cell}
-                    abbreviations={theme.theme_key === "abbreviations" ? [] : abbreviations}
-                  />
-                </div>
-              ))}
-            </div>
+      <div className="grid pr-12" style={{ gridTemplateColumns: columnTemplate }}>
+        {cells.map((cell, cellIndex) => (
+          <div
+            key={`${block.id}-${cellIndex}`}
+            role={isHeader ? "columnheader" : "cell"}
+            className={cn(
+              "min-w-0 border-r px-4 py-3 last:border-r-0 [overflow-wrap:anywhere]",
+              isHeader
+                ? "font-semibold text-foreground"
+                : "whitespace-normal leading-7 text-foreground/90",
+            )}
+          >
+            <AbbreviatedText
+              text={cell}
+              abbreviations={theme.theme_key === "abbreviations" ? [] : abbreviations}
+            />
           </div>
-          <div className="pt-1 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
-            <CommentButton count={count} label="Комментарии к строке таблицы" onClick={() => onOpenComments(target)} />
-          </div>
-        </div>
+        ))}
+      </div>
+      <div className="absolute right-2 top-2 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
+        <CommentButton count={count} label="Комментарии к строке таблицы" onClick={() => onOpenComments(target)} />
+      </div>
+      <div className="px-3 pb-2">
         <InlineComments
           comments={commentsForTarget(comments, target)}
           onShowAll={() => onOpenComments(target)}
@@ -451,6 +450,26 @@ function ContentTableRow({
       </div>
     </div>
   );
+}
+
+function getDelimitedTableColumnTemplate(columnCount: number) {
+  if (columnCount === 4) {
+    return "minmax(180px, 0.85fr) minmax(250px, 1fr) minmax(340px, 1.35fr) minmax(420px, 1.65fr)";
+  }
+
+  return `repeat(${columnCount}, minmax(220px, 1fr))`;
+}
+
+function getDelimitedTableMinWidthClass(columnCount: number) {
+  if (columnCount === 4) {
+    return "min-w-[1190px]";
+  }
+
+  if (columnCount >= 3) {
+    return "min-w-[760px]";
+  }
+
+  return "min-w-full";
 }
 
 function BlockText({
@@ -570,6 +589,9 @@ function MobileThemeNav({ themes, selectedSlug }: { themes: ReaderTheme[]; selec
       <SheetContent side="left" className="w-[min(90vw,360px)] p-0">
         <SheetHeader className="border-b px-4 py-4 text-left">
           <SheetTitle>Темы</SheetTitle>
+          <SheetDescription className="sr-only">
+            Список тем конспекта для перехода к отдельной теме.
+          </SheetDescription>
         </SheetHeader>
         <ThemeNav themes={themes} selectedSlug={selectedSlug} />
       </SheetContent>

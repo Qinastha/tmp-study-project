@@ -77,10 +77,12 @@ describe("ReaderView Markdown tables", () => {
 
     expect(html).toContain('role="table"');
     expect(html).toContain('data-reader-markdown-table="true"');
+    expect(html).toContain("data-reader-table-scroll");
     expect(html).toContain('role="columnheader"');
     expect(html).toContain('role="cell"');
     expect(html).toContain("Налоксон");
     expect(html).toContain("overflow-x-auto");
+    expect(html).toContain("min-w-[1190px]");
     expect(html).toContain("theme-20-102");
   });
 
@@ -119,6 +121,7 @@ describe("ReaderView Markdown tables", () => {
     expect(html).toContain('data-reader-markdown-table="true"');
     expect(html).toContain("Позиции из приказа МОЗ №435");
     expect(html).toContain("Налоксон");
+    expect(html).toContain("сначала обеспечить вентиляцию");
     expect(html).toContain("Флумазенил");
     expect(html).toContain("N-ацетилцистеин");
     expect(html).toContain("Унитиол");
