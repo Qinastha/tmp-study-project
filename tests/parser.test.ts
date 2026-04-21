@@ -12,7 +12,7 @@ describe("parseStudyMarkdown", () => {
     expect(parsed.themes.filter((theme) => theme.themeKey.startsWith("theme-"))).toHaveLength(25);
     expect(parsed.themes[0].title).toBe("Как пользоваться конспектом");
     expect(parsed.themes.some((theme) => theme.title.includes("Нормативная карта экзамена"))).toBe(false);
-    expect(parsed.themes[26].title).toBe("Быстрое финальное повторение и устный ответ");
+    expect(parsed.themes[26].title).toBe("Быстрое финальное повторение и тестовые акценты");
   });
 
   it("removes source numbers from theme display titles", () => {
@@ -47,17 +47,16 @@ describe("parseStudyMarkdown", () => {
     expect(preopTheme?.sortOrder).toBe(3);
     expect(preopTheme?.blocks[0].blockKey).toBe("theme-01-001");
     expect(preopTheme?.blocks[0].kind).toBe("heading");
-    expect(preopTheme?.blocks[0].text).toBe("Покрывает коды Крок 3");
+    expect(preopTheme?.blocks[0].text).toBe("Ключевые акценты");
   });
 
-  it("adds the normalized frame to every Krok module", () => {
+  it("keeps reader-facing frame headings useful and moves Krok codes out of source", () => {
     const requiredHeadings = [
-      "Покрывает коды Крок 3",
-      "Что обязан проговорить на экзамене",
+      "Ключевые акценты",
       "Практический алгоритм",
       "Красные цифры/пороговые значения",
       "Источники и спорные места",
-      "Пробелы для дозаполнения",
+      "Пробелы к заполнению",
     ];
 
     for (const theme of parsed.themes.filter((item) => item.themeKey.startsWith("theme-"))) {
@@ -66,7 +65,17 @@ describe("parseStudyMarkdown", () => {
         .map((block) => block.text);
 
       expect(headings).toEqual(expect.arrayContaining(requiredHeadings));
+      expect(headings).not.toContain("Покрывает коды Крок 3");
+      expect(headings).not.toContain("Что обязан проговорить на экзамене");
+      expect(headings.at(-1)).toBe("Пробелы к заполнению");
     }
+
+    const sourceText = parsed.themes
+      .flatMap((theme) => [theme.title, ...theme.blocks.map((block) => block.text)])
+      .join("\n");
+
+    expect(sourceText).not.toMatch(/\b[1-6]\.\d+\.\d+\.\d+\b/);
+    expect(sourceText).not.toMatch(/экзамен|экзаменац|устн/i);
   });
 
   it("preserves representative legacy topics inside the new Krok modules", () => {
@@ -186,7 +195,7 @@ describe("parseStudyMarkdown", () => {
       "Трансфузиология и компоненты крови",
     );
     expect(parsed.themes.find((theme) => theme.themeKey === "theme-25")?.title).toBe(
-      "Быстрое финальное повторение и устный ответ",
+      "Быстрое финальное повторение и тестовые акценты",
     );
   });
 

@@ -47,7 +47,7 @@ Scope note: active study content is hospital-stage AIT, starting when the patien
 - `theme-22` - Anesthesia pharmacology: anesthetics, opioids, and neuromuscular blockers.
 - `theme-23` - Toxicology and acute poisonings.
 - `theme-24` - Transfusion medicine and blood components.
-- `theme-25` - Rapid final review and oral-answer template.
+- `theme-25` - Rapid final review and written-test accents.
 
 ## Detailed Krok Mapping
 
@@ -168,8 +168,8 @@ International/reference sources:
 - Stanford Emergency Manual, version `4.4`, 2022.
 - ASRA LAST checklist, 2020, for lipid rescue and modified resuscitation in local anesthetic systemic toxicity.
 - MHAUS and European Malignant Hyperthermia Group for malignant-hyperthermia trigger lists and non-triggering anesthetic framing.
-- Order `435/2006` is the source for the toxicology antidote table in `theme-20`; it is historical because the Rada record marks it invalid from `2023-09-01`, but it remains useful for study comparison.
-- In `theme-20`, hydroxocobalamin, fomepizole, pralidoxime, and lipid emulsion are not treated as order `435/2006` antidotes; if restored later, each needs a separate current source and local availability check.
+- Order `435/2006` is the source for the toxicology antidote table in `theme-23`; it is historical because the Rada record marks it invalid from `2023-09-01`, but it remains useful for study comparison.
+- In `theme-23`, hydroxocobalamin, fomepizole, pralidoxime, and lipid emulsion are not treated as order `435/2006` antidotes; if restored later, each needs a separate current source and local availability check.
 - AABB 2023 RBC transfusion guideline; AABB/ICTMG 2025 platelet transfusion guideline; NICE NG24 blood transfusion guidance for FFP and cryoprecipitate thresholds.
 - Surviving Sepsis Campaign Pediatric Guidelines 2026, used for pediatric sepsis where no current Ukrainian pediatric-sepsis standard is available in the DEC registry.
 - KDIGO 2024 CKD Guideline, used for renal-risk framing and medication stewardship where Ukrainian material is not perioperative-specific.

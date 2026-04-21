@@ -23,6 +23,7 @@ export interface ReaderData {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const CONTENT_BLOCK_PAGE_SIZE = 1000;
 
 function createPublicSupabaseClient() {
   return createSupabaseClient<Database>(supabaseUrl!, supabaseKey!, {
@@ -53,18 +54,9 @@ const getCachedReaderContent = unstable_cache(
     }
 
     const themeIds = themes.map((theme) => theme.id);
-    const { data: blocks, error: blockError } = await supabase
-      .from("theme_content_blocks")
-      .select("*")
-      .in("theme_id", themeIds)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
+    const blocks = await fetchActiveContentBlocks(supabase, themeIds);
 
-    if (blockError) {
-      throw new Error(blockError.message);
-    }
-
-    const blocksByThemeId = groupByThemeId(blocks ?? []);
+    const blocksByThemeId = groupByThemeId(blocks);
 
     return themes.map((theme) => ({
       ...theme,
@@ -72,7 +64,7 @@ const getCachedReaderContent = unstable_cache(
       comments: [],
     })) satisfies ReaderTheme[];
   },
-  ["study-reader-active-content"],
+  ["study-reader-active-content", "paged-blocks-v2"],
   {
     revalidate: CONTENT_CACHE_REVALIDATE_SECONDS,
     tags: [CONTENT_CACHE_TAG],
@@ -198,6 +190,35 @@ async function getVisibleComments(themeIds: string[]) {
   );
 
   return settledComments.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
+}
+
+async function fetchActiveContentBlocks(
+  supabase: ReturnType<typeof createPublicSupabaseClient>,
+  themeIds: string[],
+) {
+  const blocks: ContentBlockRow[] = [];
+
+  for (let from = 0; ; from += CONTENT_BLOCK_PAGE_SIZE) {
+    const to = from + CONTENT_BLOCK_PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from("theme_content_blocks")
+      .select("*")
+      .in("theme_id", themeIds)
+      .eq("is_active", true)
+      .order("theme_id", { ascending: true })
+      .order("sort_order", { ascending: true })
+      .range(from, to);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    blocks.push(...(data ?? []));
+
+    if (!data || data.length < CONTENT_BLOCK_PAGE_SIZE) {
+      return blocks;
+    }
+  }
 }
 
 function normalizeThemeIds(themeIds: string[]) {

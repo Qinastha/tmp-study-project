@@ -19,7 +19,10 @@ Use this when study text changes and existing user comments must remain attached
 - Study content is intentionally hospital-stage focused: from patient arrival to the admitting/emergency department and through OR/ICU/ward/diagnostic-unit care. Prehospital triage, field sorting, evacuation logistics, and broad emergency-medicine workflows stay out of `content/source.md` unless the user explicitly asks for them.
 - Krok modules are numbered in Markdown for review, but parser/export strips display numbers and keeps stable keys such as `theme-01`.
 - Nested clinical headings must not keep legacy numbering such as `3.2.` or labels like `Перенесенный материал:`. Those prefixes are obsolete after restructuring and would be visible to readers.
-- Every Krok module should keep these frame headings: `Покрывает коды Крок 3`, `Что обязан проговорить на экзамене`, `Практический алгоритм`, `Красные цифры/пороговые значения`, `Источники и спорные места`, `Пробелы для дозаполнения`.
+- Krok code mapping belongs in `docs/curriculum-coverage-map.md`, not in `content/source.md`; do not add `Покрывает коды Крок 3` sections or raw Krok code lists to reader content.
+- Every Krok module should keep these reader-facing frame headings: `Ключевые акценты`, `Практический алгоритм`, `Красные цифры/пороговые значения`, `Источники и спорные места`, `Пробелы к заполнению`.
+- `Пробелы к заполнению` must be the last subsection of each Krok module so unfinished work stays visible without interrupting the study text.
+- Avoid repeated "answer on the exam" or "oral answer" wording in `content/source.md`; Krok 3 is treated here as a written test, so use neutral phrases such as `Ключевые акценты`, `тестовые акценты`, or `клинический разбор`.
 - Do not delete old material during restructuring. Move it into the closest Krok module; if it does not map cleanly, place it under a clearly marked preserved/rework subsection.
 - New clinical doses, thresholds, and algorithms require a primary source in the coverage map. If verification is incomplete, mark the item as `Пробел` or `Требует сверки`.
 - When adding historical orders, record their current legal/source status in `docs/curriculum-coverage-map.md`. For example, order `435/2006` on toxicology is useful study context but is no longer an active normative source, so reader content must say that before presenting it as a clinical basis.
@@ -42,6 +45,7 @@ Use this when study text changes and existing user comments must remain attached
 - Comments also use a long cache TTL: 24 hours.
 - Comments are cached per theme, not as arbitrary theme-id bundles.
 - New comments created through the app invalidate only that theme's comment cache.
+- Reader block queries must stay paginated with explicit ranges. Supabase REST returns only the first `1000` rows by default, and the current Markdown-derived content can exceed that after restructuring.
 - MCP content updates must call the protected revalidation endpoint immediately after the Supabase upsert, because content cache is intentionally long-lived to reduce Supabase and Vercel usage.
 
 ## Rules For Preserving Comments

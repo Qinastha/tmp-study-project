@@ -7,14 +7,14 @@ This document audits `content/source.md` before the next Supabase content update
 - Canonical content source: `content/source.md`.
 - Data flow: Markdown-only export, then Supabase MCP wipe/reseed after user review.
 - Clinical scope: hospital-stage anesthesia and intensive care.
-- No Supabase push was performed during this audit.
+- Initial audit was completed before the Supabase push; the reset/reseed log below records the later database update.
 
 ## Structural Result
 
 - `npm run source:verify` passed after the structural split, antidote/readability, and acid-base update.
 - Website sections: `27`.
 - Krok modules: `25`.
-- Parsed blocks: `1874`.
+- Parsed blocks: `1750`.
 - `docs/curriculum-coverage-map.md` no longer has rows marked `Gap`.
 - `content/source.md` does not contain MCP/Supabase/revalidation/local-path workflow terms.
 - The unused normative-map theme is not present in the reader source.
@@ -43,6 +43,7 @@ This document audits `content/source.md` before the next Supabase content update
 - The top-level reader structure was split into cleaner modules: regional/neuraxial anesthesia, peripheral/fascial blocks, obstetric anesthesia, CPR/post-ROSC, perioperative critical incidents/anaphylaxis, and standalone pharmacology/toxicology/transfusion themes.
 - This split intentionally changes many `theme_key` and `block_key` values. Per user approval, the next Supabase stage should be a full wipe/reseed and old comments may be discarded for this reset.
 - A readability pass removed informal placeholders and made the most colloquial reader-facing formulations more formal.
+- Follow-up cleanup moved Krok code coverage out of `content/source.md` and into `docs/curriculum-coverage-map.md`, renamed the repeated exam-answer frame to `Ключевые акценты`, and made `Пробелы к заполнению` the final subsection of every Krok module.
 
 ## Readiness Verdict
 
@@ -68,9 +69,24 @@ There are no blocking P0 issues found in the Markdown structure or parser/export
 - Several modules intentionally keep "requires local verification" language. This is preferable to turning uncertain local practice into a final clinical instruction.
 - The final rapid-review theme should be refreshed after the next major content batch so its red-number list tracks the expanded modules.
 
-## Next Supabase Stage
+## Supabase Reset/Reseed Log
 
-Before MCP reseed:
+Completed on `2026-04-21` after user approval to discard old comments for this structural reset.
+
+- Local checks before push: `npm run source:verify`, `npm run content:export`, `npm run test`, `npm run lint`, `npm run build`, and `E2E_SUPABASE_READY=1 npm run test:e2e`.
+- Payload source: `content/source.md`.
+- Source SHA-256: `91e8dbf252e9bcae9d8393dc172d90ba385e7951d19d92fe85bc9cd0ec521cfe`.
+- Old content/comments were truncated before reseeding.
+- Supabase result after reseed: `1` source document, `27` active themes, `1750` active blocks, `0` comments.
+- Temporary seed bridge function was removed after use.
+- Deployed cache revalidation returned `{"ok":true}` from the protected Vercel endpoint.
+- Follow-up cleanup on the same date removed Krok-code sections from reader content, removed repeated exam-answer wording, kept gaps as the final subsection in every Krok module, and reseeded Supabase with the cleaned `1750`-block payload.
+
+After this reset, future content updates should return to the normal preservation workflow in `docs/mcp-content-update-guide.md`: keep stable `theme_key`/`block_key` values when possible and avoid hard-deleting commented content.
+
+## Completed Supabase Stage
+
+The completed flow was:
 
 1. User reviews the current `content/source.md`.
 2. Run `npm run source:verify`, `npm run content:export`, `npm run test`, `npm run lint`, `npm run build`, and `E2E_SUPABASE_READY=1 npm run test:e2e`.

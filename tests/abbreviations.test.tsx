@@ -27,13 +27,32 @@ describe("abbreviations", () => {
   });
 
   it("matches longest abbreviations first and avoids partial word matches", () => {
-    const parts = splitTextByAbbreviations("ABCDE важнее ABC, но СЛРочка не термин.", abbreviations);
+    const parts = splitTextByAbbreviations(
+      "ABCDE важнее ABC, PONV-риск и `PNB` требуют внимания, но СЛРочка не термин.",
+      abbreviations,
+    );
 
     expect(parts.filter((part) => part.type === "abbr").map((part) => part.text)).toEqual([
       "ABCDE",
       "ABC",
+      "PONV",
+      "PNB",
     ]);
-    expect(parts.map((part) => part.text).join("")).toBe("ABCDE важнее ABC, но СЛРочка не термин.");
+    expect(parts.map((part) => part.text).join("")).toBe(
+      "ABCDE важнее ABC, PONV-риск и PNB требуют внимания, но СЛРочка не термин.",
+    );
+  });
+
+  it("highlights newer perioperative abbreviations in slash and hyphen contexts", () => {
+    const parts = splitTextByAbbreviations("PCA/PCEA, CPNB и PONV-риск после PNB.", abbreviations);
+
+    expect(parts.filter((part) => part.type === "abbr").map((part) => part.text)).toEqual([
+      "PCA",
+      "PCEA",
+      "CPNB",
+      "PONV",
+      "PNB",
+    ]);
   });
 
   it("renders accessible abbreviation definition popovers", () => {
@@ -43,8 +62,9 @@ describe("abbreviations", () => {
 
     expect(html).toContain('data-abbreviation-term="ABCDE"');
     expect(html).toContain("data-abbreviation-popover-trigger");
-    expect(html).toContain("расширенный первичный осмотр");
+    expect(html).toContain('aria-label="ABCDE"');
     expect(html).toContain('data-abbreviation-term="MAP"');
-    expect(html).toContain("среднее артериальное давление");
+    expect(html).toContain('aria-label="MAP"');
+    expect(html).not.toContain("ABCDE: расширенный первичный осмотр");
   });
 });

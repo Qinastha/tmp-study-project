@@ -8,7 +8,7 @@ import {
 } from "../../lib/content/abbreviations";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
-const HOVER_CLOSE_DELAY_MS = 220;
+const HOVER_CLOSE_DELAY_MS = 650;
 
 export function AbbreviatedText({
   text,
@@ -46,6 +46,7 @@ function AbbreviationPopover({
   const [open, setOpen] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickOpenedRef = useRef(false);
+  const pointerInsideRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -71,6 +72,9 @@ function AbbreviationPopover({
     clearCloseTimer();
     closeTimerRef.current = setTimeout(() => {
       closeTimerRef.current = null;
+      if (pointerInsideRef.current) {
+        return;
+      }
       clickOpenedRef.current = false;
       setOpen(false);
     }, HOVER_CLOSE_DELAY_MS);
@@ -78,12 +82,14 @@ function AbbreviationPopover({
 
   function handlePointerEnter(event: PointerEvent<HTMLElement>) {
     if (event.pointerType === "mouse" || event.pointerType === "pen") {
+      pointerInsideRef.current = true;
       openPopover();
     }
   }
 
   function handlePointerLeave(event: PointerEvent<HTMLElement>) {
     if (event.pointerType === "mouse" || event.pointerType === "pen") {
+      pointerInsideRef.current = false;
       scheduleClose();
     }
   }
@@ -104,7 +110,7 @@ function AbbreviationPopover({
           type="button"
           data-abbreviation-term={term}
           data-abbreviation-popover-trigger
-          aria-label={`${term}: ${definition}`}
+          aria-label={term}
           className="mx-0.5 rounded-sm border-b border-dotted border-primary/70 bg-primary/5 px-0.5 font-medium text-primary underline-offset-2 transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/45"
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}

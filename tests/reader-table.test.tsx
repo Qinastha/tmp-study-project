@@ -1,9 +1,12 @@
+import fs from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { ReaderView } from "../src/components/reader/reader-view";
 import { ThemeProvider } from "../src/components/theme/theme-provider";
 import { TooltipProvider } from "../src/components/ui/tooltip";
+import { parseStudyMarkdown } from "../src/lib/content/parser";
+import { SOURCE_MARKDOWN_PATH } from "../src/lib/content/paths";
 import type { ReaderTheme } from "../src/lib/content/repository";
 import type { ContentBlockRow } from "../src/types/database";
 
@@ -79,5 +82,45 @@ describe("ReaderView Markdown tables", () => {
     expect(html).toContain("Налоксон");
     expect(html).toContain("overflow-x-auto");
     expect(html).toContain("theme-20-102");
+  });
+
+  it("renders the real antidote table from source.md as a reader table", () => {
+    const parsed = parseStudyMarkdown(fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8"));
+    const toxicologyTheme = parsed.themes.find((theme) => theme.themeKey === "theme-23");
+
+    expect(toxicologyTheme).toBeDefined();
+
+    const html = renderToStaticMarkup(
+      <ThemeProvider>
+        <TooltipProvider>
+          <ReaderView
+            mode="all"
+            themes={[
+              readerTheme(
+                toxicologyTheme!.blocks.map((item, index) =>
+                  block({
+                    id: `22222222-2222-4222-8222-${String(index + 1).padStart(12, "0")}`,
+                    block_key: item.blockKey,
+                    kind: item.kind,
+                    heading_level: item.headingLevel,
+                    text: item.text,
+                    sort_order: item.sortOrder,
+                    content_hash: item.contentHash,
+                  }),
+                ),
+              ),
+            ]}
+          />
+        </TooltipProvider>
+      </ThemeProvider>,
+    );
+
+    expect(html).toContain("Таблица антидотов по приказу МОЗ №435");
+    expect(html).toContain('data-reader-markdown-table="true"');
+    expect(html).toContain("Позиции из приказа МОЗ №435");
+    expect(html).toContain("Налоксон");
+    expect(html).toContain("Флумазенил");
+    expect(html).toContain("N-ацетилцистеин");
+    expect(html).toContain("Унитиол");
   });
 });

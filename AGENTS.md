@@ -25,6 +25,8 @@ Keep technical workflow details out of `content/source.md`. MCP commands, revali
 
 Only top-level Krok reader modules in `content/source.md` should carry review numbers. Nested clinical headings must be clean reader-facing titles without legacy prefixes such as `3.2.` or `Перенесенный материал:`.
 
+Krok code coverage belongs in `docs/curriculum-coverage-map.md`, not in Supabase reader content. Do not add `Покрывает коды Крок 3` sections or raw Krok code lists to `content/source.md`; keep repeated exam-answer wording out of reader text and make `Пробелы к заполнению` the final subsection of each Krok module.
+
 After MCP content pushes, call the protected `/api/revalidate` endpoint described in the guide so Vercel does not serve stale long-TTL content.
 
 Supabase MCP is expected to be configured in Codex as server `supabase` for project `hkrpmyrpyevecfoalwlu`. Before a database update, run `codex mcp list` and confirm the `supabase` entry points to `https://mcp.supabase.com/mcp?project_ref=hkrpmyrpyevecfoalwlu...` with database/development features enabled. If MCP tools are not visible in the current session, ask the user to refresh/reconnect the Codex MCP session instead of falling back to unsafe public-key writes.

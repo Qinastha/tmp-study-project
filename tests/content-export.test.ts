@@ -35,7 +35,10 @@ describe("content export payload", () => {
       "Трансфузиология и компоненты крови",
     );
     expect(payload.themes.find((theme: { themeKey: string }) => theme.themeKey === "theme-25")?.title).toBe(
-      "Быстрое финальное повторение и устный ответ",
+      "Быстрое финальное повторение и тестовые акценты",
     );
+    expect(JSON.stringify(payload)).not.toContain("Покрывает коды Крок 3");
+    expect(JSON.stringify(payload)).not.toMatch(/\b[1-6]\.\d+\.\d+\.\d+\b/);
+    expect(JSON.stringify(payload)).not.toMatch(/экзамен|экзаменац|устн/i);
   });
 });

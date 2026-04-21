@@ -127,10 +127,21 @@ describe("source workflow", () => {
     const audit = fs.readFileSync(auditPath, "utf8");
 
     expect(audit).toContain("PASS WITH WARNINGS");
-    expect(audit).toContain("No Supabase push was performed");
+    expect(audit).toContain("Supabase Reset/Reseed Log");
     expect(audit).toContain("antidote table tied specifically to order `МОЗ №435/2006`");
     expect(audit).toContain("docs/curriculum-coverage-map.md` no longer has rows marked `Gap`");
     expect(audit).toContain("MCP reseed");
+  });
+
+  it("keeps Krok code mapping in docs instead of reader source", () => {
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(markdown).not.toContain("Покрывает коды Крок 3");
+    expect(markdown).not.toMatch(/\b[1-6]\.\d+\.\d+\.\d+\b/);
+    expect(markdown).not.toMatch(/экзамен|экзаменац|устн/i);
+    expect(coverageMap).toContain("Detailed Krok Mapping");
+    expect(coverageMap).toContain("| `1.1.1.0` | Airway assessment | `theme-01`, `theme-03` | Partial |");
   });
 
   it("keeps the toxicology antidote table tied to order 435/2006", () => {

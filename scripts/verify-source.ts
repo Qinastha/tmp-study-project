@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 
 import { parseStudyMarkdown, sha256 } from "../src/lib/content/parser.ts";
 import { SOURCE_MARKDOWN_PATH, SOURCE_MARKDOWN_RELATIVE_PATH } from "../src/lib/content/paths.ts";
@@ -9,12 +10,11 @@ const MINIMUM_LINE_COUNT_FROM_BASELINE = 817;
 const MINIMUM_BLOCK_COUNT_FROM_BASELINE = 648;
 
 const FRAME_HEADINGS = [
-  "Покрывает коды Крок 3",
-  "Что обязан проговорить на экзамене",
+  "Ключевые акценты",
   "Практический алгоритм",
   "Красные цифры/пороговые значения",
   "Источники и спорные места",
-  "Пробелы для дозаполнения",
+  "Пробелы к заполнению",
 ];
 
 const REQUIRED_KROK_CODES = [
@@ -112,6 +112,7 @@ const TECHNICAL_SOURCE_TERMS = [
 
 function main() {
   const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+  const coverageMap = fs.readFileSync(path.resolve(process.cwd(), "docs/curriculum-coverage-map.md"), "utf8");
   const parsed = parseStudyMarkdown(markdown);
 
   const sourceNumberedThemes = parsed.themes.filter((theme) => theme.themeKey.startsWith("theme-"));
@@ -149,6 +150,14 @@ function main() {
     throw new Error("The removed normative map must not be present in source.md.");
   }
 
+  if (markdown.includes("Покрывает коды Крок 3") || /\b[1-6]\.\d+\.\d+\.\d+\b/.test(markdown)) {
+    throw new Error("Krok code mapping must live in docs/curriculum-coverage-map.md, not source.md.");
+  }
+
+  if (/экзамен|экзаменац|устн/i.test(markdown)) {
+    throw new Error("Reader source should avoid exam-answer/oral-answer phrasing for the written Krok test format.");
+  }
+
   if (SOURCE_MARKDOWN_RELATIVE_PATH !== "content/source.md") {
     throw new Error(`Expected exported source path content/source.md, found ${SOURCE_MARKDOWN_RELATIVE_PATH}.`);
   }
@@ -173,17 +182,23 @@ function main() {
   }
 
   for (const theme of sourceNumberedThemes) {
-    const headings = new Set(theme.blocks.filter((block) => block.kind === "heading").map((block) => block.text));
+    const headingTexts = theme.blocks.filter((block) => block.kind === "heading").map((block) => block.text);
+    const headings = new Set(headingTexts);
     for (const heading of FRAME_HEADINGS) {
       if (!headings.has(heading)) {
         throw new Error(`${theme.themeKey} is missing normalized frame heading: ${heading}.`);
       }
     }
+
+    const lastHeading = headingTexts.at(-1);
+    if (lastHeading !== "Пробелы к заполнению") {
+      throw new Error(`${theme.themeKey} must keep "Пробелы к заполнению" as its last subsection.`);
+    }
   }
 
   for (const code of REQUIRED_KROK_CODES) {
-    if (!markdown.includes(code)) {
-      throw new Error(`Required Krok 3 code ${code} is missing from source.md.`);
+    if (!coverageMap.includes(code)) {
+      throw new Error(`Required Krok 3 code ${code} is missing from docs/curriculum-coverage-map.md.`);
     }
   }
 

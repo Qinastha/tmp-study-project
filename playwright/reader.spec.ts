@@ -42,6 +42,7 @@ test("seeded reader supports navigation and comments", async ({ page }) => {
 
   await page.goto("/themes");
   await expect(page.getByText(/\d+ тем/)).toBeVisible();
+  await expect(page.getByText("1750 блоков")).toBeVisible();
   await page.getByLabel("Комментарии к теме").first().click();
   await expect(page.getByText("Комментарии", { exact: true })).toBeVisible();
 });
@@ -88,6 +89,37 @@ test("abbreviation definitions open on hover or tap", async ({ page, isMobile })
     await page.waitForTimeout(250);
     await expect(definition).toBeVisible();
   }
+});
+
+test("newer perioperative abbreviations and antidote table render", async ({ page, isMobile }) => {
+  test.skip(!process.env.E2E_SUPABASE_READY, "Requires migrated and seeded Supabase project.");
+
+  await page.goto("/themes");
+
+  const ponv = page.locator('[data-abbreviation-term="PONV"]').first();
+  const pnb = page.locator('[data-abbreviation-term="PNB"]').first();
+
+  await expect(ponv).toBeVisible();
+  await expect(pnb).toBeVisible();
+
+  if (isMobile) {
+    await ponv.tap();
+  } else {
+    await ponv.hover();
+  }
+  const ponvDefinition = page
+    .locator("[data-abbreviation-popover-content]")
+    .filter({ hasText: "послеоперационная тошнота" })
+    .first();
+  await expect(ponvDefinition).toBeVisible();
+  await page.waitForTimeout(800);
+  await expect(ponvDefinition).toBeVisible();
+
+  const antidoteTable = page.locator('[data-reader-markdown-table="true"]').filter({ hasText: "Налоксон" }).first();
+  await expect(page.getByRole("heading", { name: "Таблица антидотов по приказу МОЗ №435" })).toBeVisible();
+  await expect(antidoteTable).toBeVisible();
+  await expect(antidoteTable).toContainText("Флумазенил");
+  await expect(antidoteTable).toContainText("N-ацетилцистеин");
 });
 
 test("reader has no horizontal overflow across key responsive sizes", async ({ page }) => {

@@ -120,7 +120,11 @@ export function ReaderView({ themes, mode, selectedSlug }: ReaderViewProps) {
                 <Badge variant="outline">{comments.length} комментариев</Badge>
               </div>
               <h1 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
-                {mode === "single" ? selectedTheme?.title : "Все темы"}
+                {mode === "single" && selectedTheme ? (
+                  <AbbreviatedText text={selectedTheme.title} abbreviations={abbreviations} />
+                ) : (
+                  "Все темы"
+                )}
               </h1>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
                 Режим чтения синхронизирован с общими комментариями: заметка к абзацу или теме
@@ -219,7 +223,12 @@ function ThemeArticle({
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary">
             Тема {theme.sort_order}
           </p>
-          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{theme.title}</h2>
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            <AbbreviatedText
+              text={theme.title}
+              abbreviations={theme.theme_key === "abbreviations" ? [] : abbreviations}
+            />
+          </h2>
         </div>
         <CommentButton
           count={themeCommentCount}
