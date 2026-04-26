@@ -59,13 +59,13 @@ describe("ReaderView Markdown tables", () => {
                 block({
                   id: "22222222-2222-4222-8222-222222222221",
                   block_key: "theme-20-101",
-                  text: "Позиции из приказа МОЗ №435: препарат | где упоминается | доза/схема в приказе | комментарий для конспекта.",
+                  text: "Практическая таблица антидотов: отравление/ситуация | антидот | взрослая доза и путь | дети/особые группы | контроль/главный риск | источник/статус.",
                   sort_order: 101,
                 }),
                 block({
                   id: "22222222-2222-4222-8222-222222222222",
                   block_key: "theme-20-102",
-                  text: "`Налоксон` | отравление опиоидами | `0,4-2,0 мг` | сначала обеспечить вентиляцию и кислород.",
+                  text: "Опиоиды | `Налоксон` | `0,4-2,0 мг в/в` | детям `0,01 мг/кг` | сначала обеспечить вентиляцию | DailyMed label.",
                   sort_order: 102,
                 }),
               ]),
@@ -82,7 +82,8 @@ describe("ReaderView Markdown tables", () => {
     expect(html).toContain('role="cell"');
     expect(html).toContain("Налоксон");
     expect(html).toContain("overflow-x-auto");
-    expect(html).toContain("min-w-[1190px]");
+    expect(html).toContain("minmax(360px,1.25fr)");
+    expect(html).toContain("min-w-[1800px]");
     expect(html).toContain("theme-20-102");
   });
 
@@ -117,13 +118,15 @@ describe("ReaderView Markdown tables", () => {
       </ThemeProvider>,
     );
 
-    expect(html).toContain("Таблица антидотов по приказу МОЗ №435");
+    expect(html).toContain("Практическая таблица антидотов");
     expect(html).toContain('data-reader-markdown-table="true"');
-    expect(html).toContain("Позиции из приказа МОЗ №435");
+    expect(html).toContain("отравление/ситуация");
     expect(html).toContain("Налоксон");
-    expect(html).toContain("сначала обеспечить вентиляцию");
+    expect(html).toContain("сначала вентиляция и кислород");
     expect(html).toContain("Флумазенил");
     expect(html).toContain("N-ацетилцистеин");
-    expect(html).toContain("Унитиол");
+    expect(html).toContain("Гидроксокобаламин");
+    expect(html).toContain("Fomepizole");
+    expect(html).toContain("20% липидная эмульсия");
   });
 });

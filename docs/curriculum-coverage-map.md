@@ -25,7 +25,7 @@ Scope note: active study content is hospital-stage AIT, starting when the patien
 
 - `theme-01` - Preoperative assessment, comorbidity, and individual risk.
 - `theme-02` - General anesthesia, TIVA, and procedural sedation.
-- `theme-03` - Airway, RSI, and difficult airway.
+- `theme-03` - airway management, RSI, and difficult airway algorithms.
 - `theme-04` - Regional and neuraxial anesthesia.
 - `theme-05` - Peripheral and fascial blocks.
 - `theme-06` - Obstetric anesthesia and obstetric critical states.
@@ -47,7 +47,39 @@ Scope note: active study content is hospital-stage AIT, starting when the patien
 - `theme-22` - Anesthesia pharmacology: anesthetics, opioids, and neuromuscular blockers.
 - `theme-23` - Toxicology and acute poisonings.
 - `theme-24` - Transfusion medicine and blood components.
-- `theme-25` - Rapid final review and written-test accents.
+- `theme-25` - Rapid final review and clinical accents.
+
+## Verification Gaps By Reader Module
+
+This section tracks what remains incomplete after the 2026-04-26 risk-first source verification pass. Detailed source-by-source decisions live in `docs/source-verification-audit-2026-04-26.md`.
+
+| Module | Current status | Dose/threshold gaps | Contraindication gaps | Monitoring/escalation gaps | Population gaps |
+| --- | --- | --- | --- | --- | --- |
+| `theme-01` | Partial | renal/hepatic dose-adjustment table | perioperative drug restrictions in CKD/cirrhosis | escalation when preop risk is unstable | obesity, frailty, pregnancy |
+| `theme-02` | Partial | procedural-sedation drug table | asthma/porphyria/drug-label restrictions | rescue pathway after oversedation | children, elderly, OSA |
+| `theme-03` | Partial | RSI drug doses | failed-airway contraindications by scenario | local difficult-airway escalation | obstetric/pediatric airway |
+| `theme-04` | Partial | neuraxial local-anesthetic dosing | anticoagulant intervals by drug/renal function | epidural hematoma/abscess escalation | obstetric neuraxial |
+| `theme-05` | Partial | block-specific LA maximums | deep/compressible-site anticoagulation limits | catheter monitoring sheet | pregnancy and low-weight patients |
+| `theme-06` | Partial | blood products, uterotonics, vasopressors | old protocol items needing current confirmation | massive obstetric hemorrhage escalation | fetal/neonatal and preeclampsia variants |
+| `theme-07` | Partial | analgesic and PCA/PCEA dose table | NSAID/opioid renal-hepatic limits | acute pain service escalation | children, elderly, CKD/cirrhosis |
+| `theme-08` | Partial | vasoactive and neuromuscular monitoring thresholds | device/probe limitations | depth monitoring and FoCUS escalation | pediatric equipment |
+| `theme-09` | Partial | prophylactic antibiotic redosing table, GDFT fluids | renal antibiotic dosing | stewardship stop/de-escalation | obesity, CKD, sepsis |
+| `theme-10` | Partial | PONV antiemetic and anticoagulant tables | QT/pregnancy/neuraxial restrictions | PACU discharge failure escalation | pediatrics, OSA |
+| `theme-11` | Covered for existing source material | CPR drug/energy values need periodic source refresh | none identified in current pass | post-ROSC route needs local map | neonatal details remain in `theme-19` |
+| `theme-12` | Partial | IV perioperative adrenaline titration | MH trigger/antidote contraindications | local crisis-cart drug map | pregnancy, children |
+| `theme-13` | Partial | ventilator and PE thrombolysis details | NIV/intubation cautions | transport team/equipment checklist | COPD hypercapnia, pregnancy |
+| `theme-14` | Covered for existing source material | antimicrobial dosing and renal adjustment | source-control limitations | local sepsis bundle timing | pediatric sepsis separated |
+| `theme-15` | Partial | inotrope/vasopressor and transplant ICU doses | post-transplant drug interactions | cardiology/transplant-center escalation | renal failure, pregnancy |
+| `theme-16` | Covered for existing source material | burn fluids and component dosing | TXA/anticoagulant reversal limits | MTP and damage-control activation | children, pregnancy, TBI |
+| `theme-17` | Partial | osmotherapy, BP and anticoagulant reversal doses | thrombolysis/anticoagulation exclusions | ICU/CT/neurosurgery route | pediatric neurocritical care |
+| `theme-18` | Partial | DKA, hyperkalemia, sodium correction tables | renal/hepatic medication cautions | dialysis/extracorporeal escalation | pediatric DKA, pregnancy |
+| `theme-19` | Partial | pediatric anesthesia/ICU dose tables | airway/drug age restrictions | transport and post-resuscitation route | neonates vs infants vs older children |
+| `theme-20` | Covered for existing source material | none for checklist itself | none for checklist itself | local storage/signature workflow | none identified |
+| `theme-21` | Partial | LA maximum-dose table | pregnancy/cardiac/hepatic limits | local LAST kit algorithm | children and low body weight |
+| `theme-22` | Partial | anesthetic, opioid, relaxant, reversal tables | thiopental/MH/drug-label restrictions | MH cart and dantrolene stock | children, pregnancy, obesity, shock |
+| `theme-23` | Partial | antidote availability and extracorporeal elimination criteria | mixed-poisoning cautions | toxicologist/poison-center escalation | children and pregnancy |
+| `theme-24` | Partial | component dosing in ml/kg | transfusion reactions and contraindications | hemovigilance/local blood-bank route | pediatrics, obstetrics, massive bleeding |
+| `theme-25` | Partial | summary must be refreshed after dose tables | inherits unresolved source gaps | inherits unresolved escalation gaps | inherits pediatric/pregnancy gaps |
 
 ## Detailed Krok Mapping
 
@@ -168,8 +200,9 @@ International/reference sources:
 - Stanford Emergency Manual, version `4.4`, 2022.
 - ASRA LAST checklist, 2020, for lipid rescue and modified resuscitation in local anesthetic systemic toxicity.
 - MHAUS and European Malignant Hyperthermia Group for malignant-hyperthermia trigger lists and non-triggering anesthetic framing.
-- Order `435/2006` is the source for the toxicology antidote table in `theme-23`; it is historical because the Rada record marks it invalid from `2023-09-01`, but it remains useful for study comparison.
-- In `theme-23`, hydroxocobalamin, fomepizole, pralidoxime, and lipid emulsion are not treated as order `435/2006` antidotes; if restored later, each needs a separate current source and local availability check.
+- Order `435/2006` remains historical toxicology context in `theme-23`; the Rada record marks it invalid from `2023-09-01`.
+- The `theme-23` antidote table is now practical rather than `435/2006`-only. Naloxone, flumazenil, N-acetylcysteine, methylene blue, hydroxocobalamin, fomepizole, and pralidoxime use current DailyMed labels where no active Ukrainian source is represented; lipid emulsion uses ASRA LAST 2020.
+- In `theme-23`, hydroxocobalamin, fomepizole, pralidoxime, and lipid emulsion require separate current sources and are not attributed to order `435/2006`.
 - AABB 2023 RBC transfusion guideline; AABB/ICTMG 2025 platelet transfusion guideline; NICE NG24 blood transfusion guidance for FFP and cryoprecipitate thresholds.
 - Surviving Sepsis Campaign Pediatric Guidelines 2026, used for pediatric sepsis where no current Ukrainian pediatric-sepsis standard is available in the DEC registry.
 - KDIGO 2024 CKD Guideline, used for renal-risk framing and medication stewardship where Ukrainian material is not perioperative-specific.

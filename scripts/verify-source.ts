@@ -74,7 +74,7 @@ const LEGACY_TOPICS = [
   "Транспорт пациента на ИВЛ внутри больницы",
   "FoCUS/TTE при периоперационной нестабильности",
   "TTE/FoCUS протокол при шоке",
-  "Кардиогенный шок: госпитальная рамка",
+  "Кардиогенный шок: госпитальный подход",
   "parasternal long axis",
   "догоспитальную сортировку не разбираем",
   "Острая кишечная непроходимость: госпитальный АИТ-алгоритм",
@@ -91,9 +91,10 @@ const LEGACY_TOPICS = [
   "ISHLT Guidelines for the Care of Heart Transplant Recipients 2023",
   "Таблица антидотов",
   "N-ацетилцистеин",
-  "Атропин + диэтиксим",
-  "Этанол",
-  "не найдены в приказе №435",
+  "Атропин + пралидоксим",
+  "Fomepizole",
+  "Гидроксокобаламин",
+  "20% липидная эмульсия",
 ];
 
 const TECHNICAL_SOURCE_TERMS = [
@@ -108,6 +109,22 @@ const TECHNICAL_SOURCE_TERMS = [
   "docs/curriculum",
   "/Users/qinastha",
   "Источниковая база и материалы для сверки",
+];
+
+const EDITORIAL_ARTIFACT_PATTERNS = [
+  /тестов\w*\s+контрол\w*/i,
+  /хорош(ий|ее)\s+разбор/i,
+  /удобная\s+учебная\s+формулировка/i,
+  /Высокодоходный\s+учебный\s+тезис/i,
+  /что держать в голове без шпаргалки/i,
+  /которые любят спрашивать/i,
+  /Что спрашивают у анестезиолога/i,
+  /не стать вторым пострадавшим/i,
+  /для красоты/i,
+  /на всякий случай/i,
+  /обычной болью/i,
+  /банальный\s+`?цефтриаксон`?/i,
+  /лечу не только цифру/i,
 ];
 
 function main() {
@@ -169,6 +186,12 @@ function main() {
   for (const term of TECHNICAL_SOURCE_TERMS) {
     if (markdown.includes(term)) {
       throw new Error(`Technical workflow term must live in docs, not source.md: ${term}.`);
+    }
+  }
+
+  for (const pattern of EDITORIAL_ARTIFACT_PATTERNS) {
+    if (pattern.test(markdown)) {
+      throw new Error(`Reader source still contains an editorial artifact: ${pattern}.`);
     }
   }
 

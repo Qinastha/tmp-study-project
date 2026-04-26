@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   BookOpen,
   ChevronLeft,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
+  ChevronsLeft,
+  ChevronsRight,
   List,
   MessageSquare,
   PanelLeft,
@@ -46,19 +50,71 @@ interface ReaderViewProps {
   selectedSlug?: string;
 }
 
+const ALL_THEMES_READING_POSITION_KEY = "ait-study-reader:last-theme-slug";
+const READER_SCROLL_OFFSET_PX = 96;
+
 export function ReaderView({ themes, mode, selectedSlug }: ReaderViewProps) {
   const [comments, setComments] = useState<CommentRow[]>(() => themes.flatMap((theme) => theme.comments));
   const [target, setTarget] = useState<CommentTarget | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [activeSlug, setActiveSlug] = useState(() => selectedSlug ?? themes[0]?.slug ?? "");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const activeSlugRef = useRef(activeSlug);
+  const restoredAllThemesPositionRef = useRef(false);
+  const hasHydrated = useHasHydrated();
   const isDesktop = useIsDesktop();
 
   const selectedTheme = themes.find((theme) => theme.slug === selectedSlug) ?? themes[0];
+  const activeTheme = mode === "all"
+    ? themes.find((theme) => theme.slug === activeSlug) ?? themes[0]
+    : selectedTheme;
+  const activeIndex = Math.max(
+    0,
+    themes.findIndex((theme) => theme.id === activeTheme?.id),
+  );
   const selectedIndex = themes.findIndex((theme) => theme.id === selectedTheme?.id);
   const visibleThemes = mode === "single" && selectedTheme ? [selectedTheme] : themes;
   const abbreviations = useMemo(() => extractAbbreviations(themes), [themes]);
   const totalBlocks = useMemo(
     () => themes.reduce((sum, theme) => sum + theme.blocks.length, 0),
     [themes],
+  );
+
+  const commitActiveTheme = useCallback(
+    (slug: string) => {
+      if (!slug) {
+        return;
+      }
+
+      if (activeSlugRef.current === slug) {
+        return;
+      }
+
+      activeSlugRef.current = slug;
+      setActiveSlug(slug);
+      if (mode === "all") {
+        window.localStorage.setItem(ALL_THEMES_READING_POSITION_KEY, slug);
+      }
+    },
+    [mode],
+  );
+
+  const scrollToTheme = useCallback(
+    (slug: string, behavior: ScrollBehavior = "smooth") => {
+      const targetElement = document.getElementById(slug);
+
+      if (!targetElement) {
+        return;
+      }
+
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      commitActiveTheme(slug);
+      targetElement.scrollIntoView({
+        behavior: reducedMotion ? "auto" : behavior,
+        block: "start",
+      });
+    },
+    [commitActiveTheme],
   );
 
   useEffect(() => {
@@ -79,41 +135,129 @@ export function ReaderView({ themes, mode, selectedSlug }: ReaderViewProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (mode !== "all" || restoredAllThemesPositionRef.current) {
+      return;
+    }
+
+    restoredAllThemesPositionRef.current = true;
+
+    const hashSlug = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+    const storedSlug = window.localStorage.getItem(ALL_THEMES_READING_POSITION_KEY);
+    const targetSlug = [hashSlug, storedSlug].find(
+      (slug): slug is string => Boolean(slug && themes.some((theme) => theme.slug === slug)),
+    );
+
+    if (!targetSlug) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => scrollToTheme(targetSlug, "auto"), 0);
+    return () => window.clearTimeout(timeout);
+  }, [mode, scrollToTheme, themes]);
+
+  useEffect(() => {
+    if (mode !== "all") {
+      return;
+    }
+
+    let animationFrame = 0;
+
+    function updateActiveThemeFromScroll() {
+      animationFrame = 0;
+      const nextSlug = findCurrentThemeSlug(themes);
+
+      if (nextSlug) {
+        commitActiveTheme(nextSlug);
+      }
+    }
+
+    function scheduleUpdate() {
+      if (animationFrame === 0) {
+        animationFrame = window.requestAnimationFrame(updateActiveThemeFromScroll);
+      }
+    }
+
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (animationFrame !== 0) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [commitActiveTheme, mode, themes]);
+
   function openComments(nextTarget: CommentTarget) {
     setTarget(nextTarget);
     setPanelOpen(true);
   }
 
   return (
-    <main className="min-h-svh bg-background">
+    <main className="min-h-svh bg-background" data-reader-mode={mode}>
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-3 px-3 sm:px-5">
-          <MobileThemeNav themes={themes} selectedSlug={selectedTheme?.slug} />
+        <div className="flex h-14 w-full items-center gap-3 px-3 sm:px-5">
+          <MobileThemeNav
+            themes={themes}
+            mode={mode}
+            selectedSlug={activeTheme?.slug}
+            onSelectTheme={(slug) => scrollToTheme(slug)}
+          />
           <div className="min-w-0 flex-1">
             <Link href="/themes" className="flex w-fit items-center gap-2">
               <BookOpen className="size-4 text-primary" />
               <span className="truncate text-sm font-semibold">АИТ Study Reader</span>
             </Link>
           </div>
+          {mode === "single" ? (
+            <Button variant="secondary" size="sm" className="md:hidden" asChild>
+              <Link href="/themes" aria-label="Вернуться ко всем темам">
+                <List className="size-3.5" />
+                Все
+              </Link>
+            </Button>
+          ) : null}
           <nav className="hidden items-center gap-1 md:flex">
             <Button variant={mode === "all" ? "secondary" : "ghost"} size="sm" asChild>
               <Link href="/themes">Все темы</Link>
             </Button>
             <Button variant={mode === "single" ? "secondary" : "ghost"} size="sm" asChild>
-              <Link href={`/themes/${selectedTheme?.slug ?? themes[0]?.slug}`}>Одна тема</Link>
+              <Link href={`/themes/${activeTheme?.slug ?? selectedTheme?.slug ?? themes[0]?.slug}`}>Одна тема</Link>
             </Button>
           </nav>
           <ThemeToggle />
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1440px] grid-cols-1 md:grid-cols-[280px_minmax(0,1fr)]">
+      <div
+        className={cn(
+          "grid w-full grid-cols-1 transition-[grid-template-columns] duration-300 ease-out md:grid-cols-[300px_minmax(0,1fr)]",
+          sidebarCollapsed && "md:grid-cols-[96px_minmax(0,1fr)]",
+        )}
+      >
         <aside className="sticky top-14 hidden h-[calc(100svh-3.5rem)] border-r md:block">
-          <ThemeNav themes={themes} selectedSlug={selectedTheme?.slug} />
+          <ThemeNav
+            themes={themes}
+            mode={mode}
+            selectedSlug={activeTheme?.slug}
+            collapsed={sidebarCollapsed}
+            collapsible
+            onCollapsedChange={setSidebarCollapsed}
+            onSelectTheme={(slug) => scrollToTheme(slug)}
+          />
         </aside>
 
-        <div className="min-w-0 px-4 py-6 [overflow-wrap:anywhere] sm:px-8 lg:px-12">
-          <section className="mb-8 flex flex-col gap-4 border-b pb-6 lg:flex-row lg:items-end lg:justify-between">
+        <div
+          className={cn(
+            "min-w-0 px-4 py-6 [overflow-wrap:anywhere] sm:px-8 lg:px-10 xl:px-12",
+            mode === "all" && "pb-28",
+          )}
+        >
+          <section className="mb-8 flex w-full max-w-[1280px] flex-col gap-4 border-b pb-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline">{themes.length} тем</Badge>
@@ -165,7 +309,7 @@ export function ReaderView({ themes, mode, selectedSlug }: ReaderViewProps) {
             ) : null}
           </section>
 
-          <div className="mx-auto max-w-4xl space-y-14">
+          <div className="w-full max-w-[1280px] space-y-14">
             {visibleThemes.map((theme) => (
               <ThemeArticle
                 key={theme.id}
@@ -178,6 +322,15 @@ export function ReaderView({ themes, mode, selectedSlug }: ReaderViewProps) {
           </div>
         </div>
       </div>
+
+      {mode === "all" && activeTheme && hasHydrated ? (
+        <AllThemesFloatingNav
+          themes={themes}
+          activeIndex={activeIndex}
+          sidebarCollapsed={sidebarCollapsed}
+          onSelectTheme={(slug) => scrollToTheme(slug)}
+        />
+      ) : null}
 
       <CommentPanel
         open={panelOpen}
@@ -218,7 +371,11 @@ function ThemeArticle({
   const blockSegments = segmentContentBlocks(theme.blocks);
 
   return (
-    <article id={theme.slug} className="scroll-mt-24">
+    <article
+      id={theme.slug}
+      data-reader-theme={theme.slug}
+      className="scroll-mt-24 border-b pb-12 last:border-b-0"
+    >
       <header className="mb-6 flex items-start justify-between gap-4 border-b pb-4">
         <div className="min-w-0 space-y-2">
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary">
@@ -238,7 +395,7 @@ function ThemeArticle({
         />
       </header>
 
-      <div className="mb-4 lg:ml-auto lg:max-w-[220px]">
+      <div className="mb-4 lg:ml-auto lg:max-w-[260px]">
         <InlineComments
           comments={commentsForTarget(comments, themeCommentTarget)}
           onShowAll={() => onOpenComments(themeCommentTarget)}
@@ -323,7 +480,7 @@ function ContentBlock({
 
   return (
     <div id={block.block_key} className="group scroll-mt-24 rounded-lg px-2 py-2 transition-colors hover:bg-muted/45">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(168px,220px)]">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,820px)_minmax(190px,280px)]">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
           <BlockText
             block={block}
@@ -453,6 +610,10 @@ function ContentTableRow({
 }
 
 function getDelimitedTableColumnTemplate(columnCount: number) {
+  if (columnCount === 6) {
+    return "minmax(220px,0.8fr) minmax(210px,0.75fr) minmax(360px,1.25fr) minmax(320px,1.05fr) minmax(360px,1.25fr) minmax(330px,1.15fr)";
+  }
+
   if (columnCount === 4) {
     return "minmax(180px, 0.85fr) minmax(250px, 1fr) minmax(340px, 1.35fr) minmax(420px, 1.65fr)";
   }
@@ -461,6 +622,10 @@ function getDelimitedTableColumnTemplate(columnCount: number) {
 }
 
 function getDelimitedTableMinWidthClass(columnCount: number) {
+  if (columnCount === 6) {
+    return "min-w-[1800px]";
+  }
+
   if (columnCount === 4) {
     return "min-w-[1190px]";
   }
@@ -547,30 +712,107 @@ function getDelimitedTableCaption(text: string) {
   return caption.length > 0 ? caption : null;
 }
 
-function ThemeNav({ themes, selectedSlug }: { themes: ReaderTheme[]; selectedSlug?: string }) {
+function ThemeNav({
+  themes,
+  mode,
+  selectedSlug,
+  collapsed = false,
+  collapsible = false,
+  onCollapsedChange,
+  onSelectTheme,
+}: {
+  themes: ReaderTheme[];
+  mode: "all" | "single";
+  selectedSlug?: string;
+  collapsed?: boolean;
+  collapsible?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
+  onSelectTheme?: (slug: string) => void;
+}) {
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b px-4 py-4">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <PanelLeft className="size-4 text-primary" />
-          Темы
+    <div
+      data-reader-theme-nav={collapsed ? "collapsed" : "expanded"}
+      className="flex h-full min-w-0 flex-col overflow-hidden"
+    >
+      <div className={cn("border-b px-3 py-4 transition-[padding] duration-300", collapsed && "px-2")}>
+        <div className={cn("flex items-center gap-2 text-sm font-medium", collapsed && "justify-center")}>
+          <PanelLeft className="size-4 shrink-0 text-primary" />
+          <span
+            className={cn(
+              "min-w-0 overflow-hidden whitespace-nowrap transition-[opacity,width] duration-200",
+              collapsed && "w-0 opacity-0",
+            )}
+          >
+            Темы
+          </span>
+          {collapsible ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className={cn("ml-auto", collapsed && "ml-0")}
+                  aria-label={collapsed ? "Развернуть список тем" : "Свернуть список тем"}
+                  data-testid="reader-sidebar-collapse"
+                  onClick={() => onCollapsedChange?.(!collapsed)}
+                >
+                  {collapsed ? <ChevronsRight className="size-4" /> : <ChevronsLeft className="size-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{collapsed ? "Развернуть" : "Свернуть"}</TooltipContent>
+            </Tooltip>
+          ) : null}
         </div>
       </div>
       <ScrollArea className="min-h-0 flex-1">
-        <nav className="space-y-1 p-3">
+        <nav className={cn("space-y-1 p-2 transition-[padding] duration-300", collapsed && "px-2")}>
           {themes.map((theme) => (
-            <Button
-              key={theme.id}
-              variant={selectedSlug === theme.slug ? "secondary" : "ghost"}
-              size="sm"
-              asChild
-              className="h-auto w-full justify-start whitespace-normal px-3 py-2 text-left"
-            >
-              <Link href={`/themes/${theme.slug}`}>
-                <span className="mr-2 text-xs text-muted-foreground">{theme.sort_order}</span>
-                <span>{theme.title}</span>
-              </Link>
-            </Button>
+            <Tooltip key={theme.id}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={selectedSlug === theme.slug ? "secondary" : "ghost"}
+                  size="sm"
+                  asChild
+                  className={cn(
+                    "h-auto w-full justify-start whitespace-normal px-2.5 py-2 text-left transition-all duration-300",
+                    collapsed && "h-9 justify-center rounded-lg px-0 py-0 text-center",
+                  )}
+                >
+                  <Link
+                    href={mode === "all" ? `#${theme.slug}` : `/themes/${theme.slug}`}
+                    aria-label={collapsed ? `${theme.sort_order}. ${theme.title}` : undefined}
+                    onClick={(event) => {
+                      if (mode !== "all") {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      onSelectTheme?.(theme.slug);
+                    }}
+                  >
+                    <span
+                      className={cn(
+                        "mr-2 text-xs text-muted-foreground transition-[margin,color] duration-300",
+                        selectedSlug === theme.slug && collapsed && "text-primary",
+                        collapsed && "mr-0 text-sm font-semibold",
+                      )}
+                    >
+                      {theme.sort_order}
+                    </span>
+                    <span
+                      className={cn(
+                        "min-w-0 transition-[opacity,width] duration-200",
+                        collapsed && "sr-only",
+                      )}
+                    >
+                      {theme.title}
+                    </span>
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              {collapsed ? <TooltipContent side="right">{theme.title}</TooltipContent> : null}
+            </Tooltip>
           ))}
         </nav>
       </ScrollArea>
@@ -578,9 +820,21 @@ function ThemeNav({ themes, selectedSlug }: { themes: ReaderTheme[]; selectedSlu
   );
 }
 
-function MobileThemeNav({ themes, selectedSlug }: { themes: ReaderTheme[]; selectedSlug?: string }) {
+function MobileThemeNav({
+  themes,
+  mode,
+  selectedSlug,
+  onSelectTheme,
+}: {
+  themes: ReaderTheme[];
+  mode: "all" | "single";
+  selectedSlug?: string;
+  onSelectTheme: (slug: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="icon" className="md:hidden" aria-label="Открыть список тем">
           <List className="size-4" />
@@ -593,9 +847,178 @@ function MobileThemeNav({ themes, selectedSlug }: { themes: ReaderTheme[]; selec
             Список тем конспекта для перехода к отдельной теме.
           </SheetDescription>
         </SheetHeader>
-        <ThemeNav themes={themes} selectedSlug={selectedSlug} />
+        {mode === "single" ? (
+          <div className="border-b p-3">
+            <Button variant="secondary" size="sm" className="w-full justify-start" asChild>
+              <Link href="/themes">
+                <List className="size-4" />
+                Все темы одним списком
+              </Link>
+            </Button>
+          </div>
+        ) : null}
+        <ThemeNav
+          themes={themes}
+          mode={mode}
+          selectedSlug={selectedSlug}
+          onSelectTheme={(slug) => {
+            setOpen(false);
+            onSelectTheme(slug);
+          }}
+        />
       </SheetContent>
     </Sheet>
+  );
+}
+
+function AllThemesFloatingNav({
+  themes,
+  activeIndex,
+  sidebarCollapsed,
+  onSelectTheme,
+}: {
+  themes: ReaderTheme[];
+  activeIndex: number;
+  sidebarCollapsed: boolean;
+  onSelectTheme: (slug: string) => void;
+}) {
+  const activeTheme = themes[activeIndex] ?? themes[0];
+  const previousTheme = activeIndex > 0 ? themes[activeIndex - 1] : null;
+  const nextTheme = activeIndex < themes.length - 1 ? themes[activeIndex + 1] : null;
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  if (!activeTheme) {
+    return null;
+  }
+
+  function chooseTheme(slug: string) {
+    setOpen(false);
+    onSelectTheme(slug);
+  }
+
+  return (
+    <div
+      data-testid="all-themes-floating-nav"
+      className={cn(
+        "pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 flex justify-center px-3 transition-[left] duration-300 ease-out md:justify-end md:pr-6",
+        sidebarCollapsed ? "md:left-[96px]" : "md:left-[300px]",
+      )}
+    >
+      <div
+        ref={rootRef}
+        data-reader-theme-jump={open ? "open" : "closed"}
+        className="pointer-events-auto relative flex w-full max-w-[min(100%,34rem)] items-center gap-1 rounded-lg border bg-background/95 p-1 shadow-lg shadow-foreground/10 backdrop-blur md:w-auto"
+      >
+        <div
+          className={cn(
+            "fixed bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] left-3 right-3 z-20 origin-bottom rounded-lg border bg-background/98 p-2 shadow-lg shadow-foreground/10 backdrop-blur transition-[opacity,transform] duration-200 ease-out md:left-auto md:right-6 md:w-[min(34rem,calc(100vw-2rem))]",
+            open ? "pointer-events-auto scale-100 opacity-100" : "pointer-events-none scale-[0.98] opacity-0",
+          )}
+        >
+          <div
+            data-reader-theme-menu-scroll
+            className="max-h-[min(56svh,30rem)] overflow-y-auto overscroll-contain pr-1"
+          >
+            <nav className="space-y-1">
+              {themes.map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  className={cn(
+                    "grid w-full grid-cols-[2.25rem_minmax(0,1fr)] items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-muted",
+                    theme.id === activeTheme.id && "bg-secondary text-secondary-foreground",
+                  )}
+                  onClick={() => chooseTheme(theme.slug)}
+                >
+                  <span className="text-xs font-semibold text-muted-foreground">{theme.sort_order}</span>
+                  <span className="min-w-0 whitespace-normal leading-5">{theme.title}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-lg"
+              aria-label="Предыдущая тема"
+              data-testid="reader-floating-prev"
+              disabled={!previousTheme}
+              onClick={() => previousTheme && onSelectTheme(previousTheme.slug)}
+            >
+              <ChevronUp className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Предыдущая тема</TooltipContent>
+        </Tooltip>
+
+        <button
+          type="button"
+          className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted md:w-80"
+          aria-label="Открыть список всех тем"
+          aria-expanded={open}
+          data-testid="reader-theme-jump-trigger"
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span className="min-w-0">
+            <span className="block text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Тема {activeIndex + 1} из {themes.length}
+            </span>
+            <span className="block truncate text-sm font-semibold text-foreground">{activeTheme.title}</span>
+          </span>
+          <ChevronDown
+            className={cn("size-4 shrink-0 text-muted-foreground transition-transform duration-200", open && "rotate-180")}
+          />
+        </button>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-lg"
+              aria-label="Следующая тема"
+              data-testid="reader-floating-next"
+              disabled={!nextTheme}
+              onClick={() => nextTheme && onSelectTheme(nextTheme.slug)}
+            >
+              <ChevronDown className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Следующая тема</TooltipContent>
+        </Tooltip>
+      </div>
+    </div>
   );
 }
 
@@ -656,6 +1079,55 @@ function applyRealtimeComment(current: CommentRow[], payload: { eventType: strin
   return [...withoutExisting, nextComment].sort(
     (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
   );
+}
+
+function findCurrentThemeSlug(themes: ReaderTheme[]) {
+  if (themes.length === 0) {
+    return null;
+  }
+
+  const scrollBottom =
+    document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+
+  if (scrollBottom <= 4) {
+    return themes[themes.length - 1]?.slug ?? null;
+  }
+
+  let currentSlug = themes[0]?.slug ?? null;
+
+  for (const theme of themes) {
+    const themeElement = document.getElementById(theme.slug);
+
+    if (!themeElement) {
+      continue;
+    }
+
+    if (themeElement.getBoundingClientRect().top <= READER_SCROLL_OFFSET_PX) {
+      currentSlug = theme.slug;
+      continue;
+    }
+
+    break;
+  }
+
+  return currentSlug;
+}
+
+function useHasHydrated() {
+  return useSyncExternalStore(subscribeToHydration, getHydratedSnapshot, getServerHydrationSnapshot);
+}
+
+function subscribeToHydration(listener: () => void) {
+  const timeout = window.setTimeout(listener, 0);
+  return () => window.clearTimeout(timeout);
+}
+
+function getHydratedSnapshot() {
+  return true;
+}
+
+function getServerHydrationSnapshot() {
+  return false;
 }
 
 function useIsDesktop() {

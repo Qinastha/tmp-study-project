@@ -12,7 +12,7 @@ describe("parseStudyMarkdown", () => {
     expect(parsed.themes.filter((theme) => theme.themeKey.startsWith("theme-"))).toHaveLength(25);
     expect(parsed.themes[0].title).toBe("Как пользоваться конспектом");
     expect(parsed.themes.some((theme) => theme.title.includes("Нормативная карта экзамена"))).toBe(false);
-    expect(parsed.themes[26].title).toBe("Быстрое финальное повторение и тестовые акценты");
+    expect(parsed.themes[26].title).toBe("Быстрое финальное повторение и клинические акценты");
   });
 
   it("removes source numbers from theme display titles", () => {
@@ -128,7 +128,7 @@ describe("parseStudyMarkdown", () => {
       "Транспорт пациента на ИВЛ внутри больницы",
       "FoCUS/TTE при периоперационной нестабильности",
       "TTE/FoCUS протокол при шоке",
-      "Кардиогенный шок: госпитальная рамка",
+      "Кардиогенный шок: госпитальный подход",
       "parasternal long axis",
       "догоспитальную сортировку не разбираем",
       "Острая кишечная непроходимость: госпитальный АИТ-алгоритм",
@@ -145,9 +145,10 @@ describe("parseStudyMarkdown", () => {
       "ISHLT Guidelines for the Care of Heart Transplant Recipients 2023",
       "Таблица антидотов",
       "N-ацетилцистеин",
-      "Атропин + диэтиксим",
-      "Этанол",
-      "не найдены в приказе №435",
+      "Атропин + пралидоксим",
+      "Fomepizole",
+      "Гидроксокобаламин",
+      "20% липидная эмульсия",
     ]) {
       expect(sourceText).toContain(topic);
     }
@@ -195,7 +196,7 @@ describe("parseStudyMarkdown", () => {
       "Трансфузиология и компоненты крови",
     );
     expect(parsed.themes.find((theme) => theme.themeKey === "theme-25")?.title).toBe(
-      "Быстрое финальное повторение и тестовые акценты",
+      "Быстрое финальное повторение и клинические акценты",
     );
   });
 

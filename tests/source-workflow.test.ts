@@ -70,8 +70,8 @@ describe("source workflow", () => {
     expect(coverageMap).toContain("ISHLT Guidelines for the Care of Heart Transplant Recipients");
     expect(coverageMap).toContain("ISHLT Summary of the Consensus Conference on Graft Dysfunction within the First 72 hours");
     expect(coverageMap).toContain("ISHLT Working Group on Primary Lung Graft Dysfunction");
-    expect(coverageMap).toContain("Order `435/2006` is the source for the toxicology antidote table");
-    expect(coverageMap).toContain("hydroxocobalamin, fomepizole, pralidoxime, and lipid emulsion are not treated as order `435/2006` antidotes");
+    expect(coverageMap).toContain("The `theme-23` antidote table is now practical rather than `435/2006`-only");
+    expect(coverageMap).toContain("hydroxocobalamin, fomepizole, pralidoxime, and lipid emulsion require separate current sources");
     expect(coverageMap).toContain("| `2.5.2.1` | Perioperative cardiac/hemodynamic ultrasound | `theme-08`, `theme-15` | Partial |");
     expect(coverageMap).toContain("| `5.4.1.0` | TTE cardiac protocols | `theme-15` | Partial |");
     expect(coverageMap).toContain("| `5.3.0.0` | Acute bowel obstruction | `theme-18` | Partial |");
@@ -144,15 +144,46 @@ describe("source workflow", () => {
     expect(coverageMap).toContain("| `1.1.1.0` | Airway assessment | `theme-01`, `theme-03` | Partial |");
   });
 
-  it("keeps the toxicology antidote table tied to order 435/2006", () => {
+  it("keeps the 2026-04-26 source verification audit for high-risk clinical facts", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/source-verification-audit-2026-04-26.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+
+    expect(audit).toContain("Risk-first source verification ledger");
+    expect(audit).toContain("MOH-first");
+
+    for (const themeKey of [
+      "theme-06",
+      "theme-11",
+      "theme-12",
+      "theme-14",
+      "theme-21",
+      "theme-22",
+      "theme-23",
+      "theme-24",
+    ]) {
+      expect(audit).toContain(`\`${themeKey}\``);
+    }
+  });
+
+  it("uses a practical toxicology antidote table with source status", () => {
     const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
 
-    expect(markdown).toContain("Позиции из приказа МОЗ №435");
-    expect(markdown).toContain("Атропин + диэтиксим");
-    expect(markdown).toContain("Этанол");
-    expect(markdown).toContain("не найдены в приказе №435");
-    expect(markdown).not.toContain("DailyMed naloxone, flumazenil");
-    expect(markdown).not.toContain("Fomepizole / этанол");
+    expect(markdown).toContain("Практическая таблица антидотов");
+    expect(markdown).toContain("отравление/ситуация | антидот | взрослая доза и путь | дети/особые группы | контроль/главный риск | источник/статус");
+    expect(markdown).toContain("ФОС/органофосфаты | `Атропин + пралидоксим`");
+    expect(markdown).toContain("Токсические спирты | `Fomepizole`; `этанол` только если fomepizole недоступен");
+    expect(markdown).toContain("Цианиды/дым закрытого пожара | `Гидроксокобаламин`");
+    expect(markdown).toContain("LAST | `20% липидная эмульсия`");
+    expect(markdown).toContain("№435 historical");
+    expect(markdown).toContain("DailyMed label");
+    expect(markdown).toContain("ASRA LAST checklist 2020");
+    expect(markdown).not.toContain("Позиции из приказа МОЗ №435: препарат | где упоминается | доза/схема в приказе | комментарий для конспекта");
+    expect(markdown).not.toContain("метанол: `5%` раствор");
+    expect(markdown).not.toContain("суммарно `1 г/кг/сут` в пересчете на `96%` этанол");
+    expect(markdown).not.toContain("источник неизвестен");
   });
 
   it("keeps reader-facing source text away from informal placeholders", () => {
@@ -170,6 +201,22 @@ describe("source workflow", () => {
       "неубийствен",
       "ability to ventilate",
       "волшебный",
+      "тестовый контрольационная",
+      "тестовый контрольационно",
+      "тестового контроля",
+      "тестовом контроле",
+      "хороший разбор",
+      "удобная учебная формулировка",
+      "Высокодоходный учебный тезис",
+      "что держать в голове без шпаргалки",
+      "которые любят спрашивать",
+      "Что спрашивают у анестезиолога",
+      "не стать вторым пострадавшим",
+      "для красоты",
+      "на всякий случай",
+      "обычной болью",
+      "банальный `цефтриаксон`",
+      "лечу не только цифру",
     ]) {
       expect(markdown).not.toContain(phrase);
     }

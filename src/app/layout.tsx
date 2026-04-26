@@ -8,6 +8,23 @@ export const metadata: Metadata = {
   description: "Учебный reader по анестезиологии и интенсивной терапии с общими комментариями.",
 };
 
+const themeInitScript = `
+  (function () {
+    try {
+      var storedTheme = window.localStorage.getItem("theme");
+      var theme = storedTheme === "light" || storedTheme === "dark" || storedTheme === "system"
+        ? storedTheme
+        : "system";
+      var resolvedTheme = theme === "system"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : theme;
+      document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
+      document.documentElement.style.colorScheme = resolvedTheme;
+    } catch (_) {
+    }
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,6 +36,13 @@ export default function RootLayout({
       className="h-full antialiased"
       suppressHydrationWarning
     >
+      <head>
+        <meta name="color-scheme" content="light dark" />
+        <script
+          id="theme-before-hydration"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
