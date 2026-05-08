@@ -160,6 +160,15 @@ export function parseStudyMarkdown(markdown: string): ParsedDocument {
       continue;
     }
 
+    const tableRow = parseMarkdownTableRow(stripped);
+    if (tableRow) {
+      flushParagraph();
+      if (tableRow !== "separator") {
+        currentTheme.blocks.push(makeBlock(currentTheme, "bullet", null, tableRow));
+      }
+      continue;
+    }
+
     if (stripped.startsWith("- ")) {
       flushParagraph();
       currentTheme.blocks.push(makeBlock(currentTheme, "bullet", null, stripped.slice(2).trim()));
@@ -181,9 +190,34 @@ export function parseStudyMarkdown(markdown: string): ParsedDocument {
     revisionDate: metadata.revisionDate,
     language: metadata.language,
     basis: metadata.basis,
-    contentHash: sha256(normalized),
+    contentHash: sha256(
+      finalizedThemes
+        .map((theme) => `${theme.themeKey}:${theme.slug}:${theme.title}:${theme.contentHash}`)
+        .join(":"),
+    ),
     themes: finalizedThemes,
   };
+}
+
+function parseMarkdownTableRow(line: string) {
+  if (!line.startsWith("|") || !line.includes("|")) {
+    return null;
+  }
+
+  const cells = line
+    .split("|")
+    .map((cell) => cell.trim())
+    .filter(Boolean);
+
+  if (cells.length < 3) {
+    return null;
+  }
+
+  if (cells.every((cell) => /^:?-{3,}:?$/.test(cell))) {
+    return "separator";
+  }
+
+  return cells.join(" | ");
 }
 
 interface MutableTheme {

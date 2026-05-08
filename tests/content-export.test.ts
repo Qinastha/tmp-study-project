@@ -10,6 +10,7 @@ describe("content export payload", () => {
     expect(payload.sourceDocument.sourcePath).toBe("content/source.md");
     expect(payload.sourceDocument.sourceSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(payload.sourceDocument.contentSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(payload.sourceDocument.contentSha256).not.toBe(payload.sourceDocument.sourceSha256);
     expect(payload.sourceDocument).not.toHaveProperty("pdfSha256");
     expect(payload.sourceDocument).not.toHaveProperty("pageCount");
     expect(payload.themes).toHaveLength(27);

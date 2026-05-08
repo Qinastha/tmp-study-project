@@ -48,6 +48,14 @@ Use this when study text changes and existing user comments must remain attached
 - Reader block queries must stay paginated with explicit ranges. Supabase REST returns only the first `1000` rows by default, and the current Markdown-derived content can exceed that after restructuring.
 - MCP content updates must call the protected revalidation endpoint immediately after the Supabase upsert, because content cache is intentionally long-lived to reduce Supabase and Vercel usage.
 
+## Markdown Table Export Rules
+
+- Markdown pipe tables must be exported as row-level blocks, not as one collapsed paragraph.
+- The parser converts each real Markdown table row such as `| drug | dose | note |` into one `bullet` content block so the reader can group consecutive pipe-delimited rows into a responsive table.
+- Markdown separator rows such as `| --- | --- | --- |` are formatting syntax only and must not be exported to Supabase.
+- Before every MCP push, verify that no active Supabase content block may contain a Markdown separator row such as `| --- |`; this indicates that a table was collapsed during export and will not render correctly in the UI.
+- If a future table fails to render, compare `content/source.md`, `tmp/study-content-payload.json`, and live `theme_content_blocks` rows. The active live row count must match the exported payload count, and table rows should appear as consecutive `kind = 'bullet'` rows with pipe-delimited text.
+
 ## Rules For Preserving Comments
 
 - Never recreate tables for content updates.

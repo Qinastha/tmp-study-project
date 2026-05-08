@@ -116,6 +116,8 @@ describe("source workflow", () => {
 
     expect(guide).toContain("POST https://tmp-study-project.vercel.app/api/revalidate");
     expect(guide).toContain('sourcePath: "content/source.md"');
+    expect(guide).toContain("Markdown pipe tables must be exported as row-level blocks");
+    expect(guide).toContain("no active Supabase content block may contain a Markdown separator row such as `| --- |`");
     expect(coverageMap).toContain("/Users/qinastha/Downloads/Учеба/Анест");
   });
 
@@ -136,10 +138,16 @@ describe("source workflow", () => {
   it("keeps Krok code mapping in docs instead of reader source", () => {
     const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
     const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+    const parsed = parseStudyMarkdown(markdown);
 
     expect(markdown).not.toContain("Покрывает коды Крок 3");
     expect(markdown).not.toMatch(/\b[1-6]\.\d+\.\d+\.\d+\b/);
     expect(markdown).not.toMatch(/экзамен|экзаменац|устн/i);
+    expect(
+      parsed.themes
+        .flatMap((theme) => theme.blocks)
+        .filter((block) => /\|\s*:?-{3,}:?\s*\|/.test(block.text)),
+    ).toEqual([]);
     expect(coverageMap).toContain("Detailed Krok Mapping");
     expect(coverageMap).toContain("| `1.1.1.0` | Airway assessment | `theme-01`, `theme-03` | Partial |");
   });

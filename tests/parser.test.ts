@@ -50,6 +50,36 @@ describe("parseStudyMarkdown", () => {
     expect(preopTheme?.blocks[0].text).toBe("Ключевые акценты");
   });
 
+  it("expands Markdown pipe tables into row blocks for Supabase and reader rendering", () => {
+    const regionalTheme = parsed.themes.find((theme) => theme.themeKey === "theme-04");
+    const allBlocks = parsed.themes.flatMap((theme) => theme.blocks);
+
+    expect(regionalTheme).toBeDefined();
+
+    const anticoagulantHeader = regionalTheme!.blocks.find((block) =>
+      block.text.startsWith("препарат/режим | до пункции или deep block"),
+    );
+    const lpHeader = regionalTheme!.blocks.find((block) =>
+      block.text.startsWith("Medication / group | Wait time before LP"),
+    );
+
+    expect(anticoagulantHeader?.kind).toBe("bullet");
+    expect(lpHeader?.kind).toBe("bullet");
+    expect(regionalTheme!.blocks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "bullet",
+          text: expect.stringContaining("Профилактическая НМГ | `>=12 часов`"),
+        }),
+        expect.objectContaining({
+          kind: "bullet",
+          text: expect.stringContaining("Alteplase / TPA | `48 hours`"),
+        }),
+      ]),
+    );
+    expect(allBlocks.some((block) => /\|\s*:?-{3,}:?\s*\|/.test(block.text))).toBe(false);
+  });
+
   it("keeps reader-facing frame headings useful and moves Krok codes out of source", () => {
     const requiredHeadings = [
       "Ключевые акценты",
