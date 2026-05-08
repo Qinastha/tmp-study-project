@@ -611,7 +611,7 @@ function ContentTableRow({
 
 function getDelimitedTableColumnTemplate(columnCount: number) {
   if (columnCount === 6) {
-    return "minmax(220px,0.8fr) minmax(210px,0.75fr) minmax(360px,1.25fr) minmax(320px,1.05fr) minmax(360px,1.25fr) minmax(330px,1.15fr)";
+    return "minmax(220px,0.9fr) minmax(210px,0.85fr) minmax(360px,1.4fr) minmax(320px,1.15fr) minmax(400px,1.55fr) minmax(180px,0.5fr)";
   }
 
   if (columnCount === 4) {

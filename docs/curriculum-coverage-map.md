@@ -51,34 +51,34 @@ Scope note: active study content is hospital-stage AIT, starting when the patien
 
 ## Verification Gaps By Reader Module
 
-This section tracks what remains incomplete after the 2026-04-26 risk-first source verification pass. Detailed source-by-source decisions live in `docs/source-verification-audit-2026-04-26.md`.
+This section tracks what remains incomplete after the 2026-04-26 risk-first source verification pass and the 2026-05-07 gap-fill pass. Detailed source-by-source decisions live in `docs/source-verification-audit-2026-04-26.md` and `docs/gap-fill-audit-2026-05-07.md`.
 
 | Module | Current status | Dose/threshold gaps | Contraindication gaps | Monitoring/escalation gaps | Population gaps |
 | --- | --- | --- | --- | --- | --- |
-| `theme-01` | Partial | renal/hepatic dose-adjustment table | perioperative drug restrictions in CKD/cirrhosis | escalation when preop risk is unstable | obesity, frailty, pregnancy |
+| `theme-01` | Partial, improved 2026-05-07 wave 2 | renal/hepatic dose-adjustment table | perioperative drug restrictions in CKD/cirrhosis | escalation when preop risk is unstable | obesity, frailty, pregnancy |
 | `theme-02` | Partial | procedural-sedation drug table | asthma/porphyria/drug-label restrictions | rescue pathway after oversedation | children, elderly, OSA |
-| `theme-03` | Partial | RSI drug doses | failed-airway contraindications by scenario | local difficult-airway escalation | obstetric/pediatric airway |
-| `theme-04` | Partial | neuraxial local-anesthetic dosing | anticoagulant intervals by drug/renal function | epidural hematoma/abscess escalation | obstetric neuraxial |
+| `theme-03` | Partial, improved 2026-05-08 wave 9 | RSI drug doses remain in the pharmacology module and need a local RSI drug card | awake-airway / failed-airway scenario logic improved; local contraindication card still needed | difficult-airway predictors, adult failed-airway algorithm and obstetric cross-link added; local trolley/eFONA drill remains | pediatric airway detailed in `theme-19`; obstetric detail in `theme-06` |
+| `theme-04` | Partial, improved 2026-05-07 wave 2 | neuraxial local-anesthetic dosing remains local/formulary dependent | ASRA antithrombotic intervals added; local urgent-surgery policy still needed | epidural hematoma/abscess escalation | obstetric neuraxial |
 | `theme-05` | Partial | block-specific LA maximums | deep/compressible-site anticoagulation limits | catheter monitoring sheet | pregnancy and low-weight patients |
-| `theme-06` | Partial | blood products, uterotonics, vasopressors | old protocol items needing current confirmation | massive obstetric hemorrhage escalation | fetal/neonatal and preeclampsia variants |
-| `theme-07` | Partial | analgesic and PCA/PCEA dose table | NSAID/opioid renal-hepatic limits | acute pain service escalation | children, elderly, CKD/cirrhosis |
+| `theme-06` | Partial, improved 2026-05-07 | local component/MTP card, drug concentrations | old protocol items needing current confirmation | local massive obstetric hemorrhage escalation | fetal/neonatal handoff and preeclampsia variants |
+| `theme-07` | Partial, improved 2026-05-08 wave 8 | exact systemic-analgesic dose regimens remain local-formulary dependent | analgesic safety limits and PCA/PCEA red flags added | PCA/PCEA checklist added; acute-pain service contact/escalation still local | children, elderly, CKD/cirrhosis |
 | `theme-08` | Partial | vasoactive and neuromuscular monitoring thresholds | device/probe limitations | depth monitoring and FoCUS escalation | pediatric equipment |
-| `theme-09` | Partial | prophylactic antibiotic redosing table, GDFT fluids | renal antibiotic dosing | stewardship stop/de-escalation | obesity, CKD, sepsis |
-| `theme-10` | Partial | PONV antiemetic and anticoagulant tables | QT/pregnancy/neuraxial restrictions | PACU discharge failure escalation | pediatrics, OSA |
-| `theme-11` | Covered for existing source material | CPR drug/energy values need periodic source refresh | none identified in current pass | post-ROSC route needs local map | neonatal details remain in `theme-19` |
-| `theme-12` | Partial | IV perioperative adrenaline titration | MH trigger/antidote contraindications | local crisis-cart drug map | pregnancy, children |
-| `theme-13` | Partial | ventilator and PE thrombolysis details | NIV/intubation cautions | transport team/equipment checklist | COPD hypercapnia, pregnancy |
-| `theme-14` | Covered for existing source material | antimicrobial dosing and renal adjustment | source-control limitations | local sepsis bundle timing | pediatric sepsis separated |
-| `theme-15` | Partial | inotrope/vasopressor and transplant ICU doses | post-transplant drug interactions | cardiology/transplant-center escalation | renal failure, pregnancy |
-| `theme-16` | Covered for existing source material | burn fluids and component dosing | TXA/anticoagulant reversal limits | MTP and damage-control activation | children, pregnancy, TBI |
-| `theme-17` | Partial | osmotherapy, BP and anticoagulant reversal doses | thrombolysis/anticoagulation exclusions | ICU/CT/neurosurgery route | pediatric neurocritical care |
-| `theme-18` | Partial | DKA, hyperkalemia, sodium correction tables | renal/hepatic medication cautions | dialysis/extracorporeal escalation | pediatric DKA, pregnancy |
-| `theme-19` | Partial | pediatric anesthesia/ICU dose tables | airway/drug age restrictions | transport and post-resuscitation route | neonates vs infants vs older children |
+| `theme-09` | Partial, improved 2026-05-07 wave 2 | GDFT fluids and renal antibiotic adjustment | renal antibiotic dosing | stewardship stop/de-escalation | obesity, CKD, sepsis |
+| `theme-10` | Partial, improved 2026-05-07 wave 2 | operation-specific thromboprophylaxis table | pregnancy/pediatric PONV formulary and neuraxial restriction policy | PACU discharge failure escalation | pediatrics, OSA |
+| `theme-11` | Covered for existing source material, local route partial | CPR drug/energy values need periodic source refresh | none identified in current pass | post-ROSC destination/CT/cath/ECMO route needs local map | neonatal details remain in `theme-19` |
+| `theme-12` | Partial, improved 2026-05-07 | perioperative adrenaline and dantrolene inserted; crisis-cart concentrations local | MH triggers/dantrolene covered, drug availability local | local crisis-cart drug map | pregnancy, children |
+| `theme-13` | Partial, improved 2026-05-07 wave 3 | PE thrombolysis details remain local-protocol dependent | NIV/intubation cautions | local transport team/equipment checklist and ECMO-call workflow | COPD hypercapnia, pregnancy |
+| `theme-14` | Covered for existing source material, improved 2026-05-07 wave 3 | antimicrobial dosing and renal adjustment | source-control limitation table added; local empiric schemas remain | local sepsis bundle timing and huddle workflow | pediatric sepsis separated |
+| `theme-15` | Partial, improved 2026-05-07 wave 7 | exact vasoactive concentrations/rates and transplant ICU doses remain local | post-transplant drug interactions | `SCAI` staging and `MINS` monitoring added; local shock-team/PCI/MCS/transplant-center routes remain | renal failure, pregnancy |
+| `theme-16` | Partial, improved 2026-05-07 wave 6 | burn resuscitation formulas, urine-output targets and hypothermia thresholds added; local component dosing remains | TXA/anticoagulant reversal limits | MTP activation, burn-center transfer and warming ownership remain local | children, pregnancy, TBI |
+| `theme-17` | Partial, improved 2026-05-07 wave 5 | TBI osmotherapy/BP/ventilation/status tables added; anticoagulant reversal doses still need source pass | thrombolysis/anticoagulation exclusions | local ICU/CT/neurosurgery route and continuous EEG access remain open | pediatric neurocritical care |
+| `theme-18` | Partial, improved 2026-05-07 wave 4 | DKA already МОЗ-framed; urgent `K` and symptomatic `Na` tables added; `Ca/Mg/P` and refeeding remain local/SOP-dependent | renal/hepatic medication cautions | dialysis/RRT triggers added; local nephrology pathway remains open | pediatric DKA, pregnancy |
+| `theme-19` | Partial, improved 2026-05-07 | pediatric airway/fluid frame added; antibiotic and ventilator settings local | airway/drug age restrictions need local card | transport and post-resuscitation route | neonates vs infants vs older children |
 | `theme-20` | Covered for existing source material | none for checklist itself | none for checklist itself | local storage/signature workflow | none identified |
-| `theme-21` | Partial | LA maximum-dose table | pregnancy/cardiac/hepatic limits | local LAST kit algorithm | children and low body weight |
-| `theme-22` | Partial | anesthetic, opioid, relaxant, reversal tables | thiopental/MH/drug-label restrictions | MH cart and dantrolene stock | children, pregnancy, obesity, shock |
-| `theme-23` | Partial | antidote availability and extracorporeal elimination criteria | mixed-poisoning cautions | toxicologist/poison-center escalation | children and pregnancy |
-| `theme-24` | Partial | component dosing in ml/kg | transfusion reactions and contraindications | hemovigilance/local blood-bank route | pediatrics, obstetrics, massive bleeding |
+| `theme-21` | Partial, improved 2026-05-07 | LA maximum-dose table added for common agents; mепивакаин/прилокаин local | pregnancy/cardiac/hepatic cautions added but need local max-dose card | local LAST kit algorithm | children and low body weight |
+| `theme-22` | Partial, improved 2026-05-07 | induction/NMBA/reversal and dantrolene table added; opioid/adjuvant table local | thiopental/MH/drug-label restrictions improved | MH cart and dantrolene stock local | children, pregnancy, obesity, shock |
+| `theme-23` | Partial, improved 2026-05-07 | ECTR criteria added; local antidote availability unresolved | mixed-poisoning cautions remain | toxicologist/poison-center escalation local | children and pregnancy |
+| `theme-24` | Partial, improved 2026-05-07 | transfusion reactions added; component ml/kg local | reaction recognition added, contraindication nuance local | hemovigilance/local blood-bank route | pediatrics, obstetrics, massive bleeding |
 | `theme-25` | Partial | summary must be refreshed after dose tables | inherits unresolved source gaps | inherits unresolved escalation gaps | inherits pediatric/pregnancy gaps |
 
 ## Detailed Krok Mapping
@@ -176,6 +176,10 @@ Official МОЗ/ДЭЦ sources currently represented in the study content:
 - Operating-room anesthesia safety checklist - Order `110/2012`, updated by `1614/2021`, form `008/о`, point `11`.
 - Toxicology - order `435/2006`, 2006-07-03; the Rada record marks it as no longer valid from 2023-09-01, so it is historical study context unless replaced by a current source.
 - Combat trauma packages - orders `714/2024`, `1237/2024`, `253/2025`, `856/2025`, `1555/2025`.
+- Burns - `ГС 2024-1869`, order `МОЗ №1869` from 2024-11-06; active standard for noncombat burn care, including fluid calculation, airway, infection prevention and nutrition.
+- Combat trauma hypothermia - `ГС 2025-1555-1`, order `МОЗ №1555` from 2025-10-13; active protocol based on JTS CPG 2023, including stage 2/3 warming and warmed blood/fluids.
+- Combat trauma burns - `ГС 2025-1555-4`, order `МОЗ №1555` from 2025-10-13; active protocol based on JTS Burn Care CPG, used as combat-trauma supplement to `ГС 2024-1869`.
+- WHO 2024 burn mass-casualty standards and Merck Manual Professional burns chapter - Parkland/Baxter formula as an additional study option only; primary Ukrainian-standard calculation remains `ГС 2024-1869`.
 - Traumatic hemorrhagic shock - `ГС 2022-1192`, 2022-07-11.
 - Ischemic stroke - `ГС 2024-1070`, 2024-06-20.
 - Hemorrhagic stroke / spontaneous intracerebral hemorrhage - `ГС 2022-09`, 2022-01-05; older `ГС 2014-275`, 2014-04-17.
@@ -183,7 +187,7 @@ Official МОЗ/ДЭЦ sources currently represented in the study content:
 - Ambulatory dental anesthesia - `ГС 2025-555`, 2025-03-27.
 - Drug allergy including anaphylaxis - `ГС 2015-916`, 2015-12-30.
 - Rational antibacterial and antifungal use - `ГС 2023-1513`, 2023-08-23.
-- Parenteral perioperative antibiotic prophylaxis - `ГС 2022-822`, 2022-05-17.
+- Parenteral perioperative antibiotic prophylaxis - `ГС 2026-540`, 2026-04-23.
 - Adult type 2 diabetes - `ГС 2024-1300`, 2024-07-24, with 2024 updates.
 - Adult type 1 diabetes - `ГС 2023-151`, 2023-01-26.
 - Pediatric diabetes - `ГС 2023-413`, 2023-02-28.
@@ -198,33 +202,56 @@ International/reference sources:
 - Surviving Sepsis Campaign 2026.
 - JAMA synopsis `Caring for Adult Patients With Sepsis`, 2026-03-26.
 - Stanford Emergency Manual, version `4.4`, 2022.
+- OOKB perioperative emergency checklists, planned review August 2028, based on Stanford Emergency Manual `4.4`; used for local crisis-role framing, perioperative anaphylaxis, malignant hyperthermia, high spinal block, and transfusion-reaction first steps.
 - ASRA LAST checklist, 2020, for lipid rescue and modified resuscitation in local anesthetic systemic toxicity.
+- DailyMed lidocaine, bupivacaine, ropivacaine, and articaine labels, used for maximum-dose anchors in `theme-21`; local formulary limits remain required before bedside use.
+- DailyMed propofol, ketamine, etomidate, thiopental, succinylcholine, rocuronium, sugammadex, and naloxone labels, used for source-marked pharmacology dose rows in `theme-22`.
 - MHAUS and European Malignant Hyperthermia Group for malignant-hyperthermia trigger lists and non-triggering anesthetic framing.
+- ASA 2022 difficult airway guideline, used for multifeature airway assessment, awake airway decision points, attempt limitation and emergency invasive airway preparation in `theme-03`.
+- DAS 2025 unanticipated difficult intubation guideline, used for adult hospital `Plan A/B/C/D`, oxygenation-first crisis framing, waveform capnography and `eFONA` escalation in `theme-03`.
+- OAA/DAS 2015 obstetric failed-intubation guideline, used narrowly for the hospital algorithm in `theme-06` and the airway cross-link in `theme-03` where current local/MOH text is not enough.
 - Order `435/2006` remains historical toxicology context in `theme-23`; the Rada record marks it invalid from `2023-09-01`.
 - The `theme-23` antidote table is now practical rather than `435/2006`-only. Naloxone, flumazenil, N-acetylcysteine, methylene blue, hydroxocobalamin, fomepizole, and pralidoxime use current DailyMed labels where no active Ukrainian source is represented; lipid emulsion uses ASRA LAST 2020.
 - In `theme-23`, hydroxocobalamin, fomepizole, pralidoxime, and lipid emulsion require separate current sources and are not attributed to order `435/2006`.
+- EXTRIP Workgroup recommendations, used for extracorporeal elimination triggers in lithium, methanol, ethylene glycol, salicylate, and valproate poisoning.
 - AABB 2023 RBC transfusion guideline; AABB/ICTMG 2025 platelet transfusion guideline; NICE NG24 blood transfusion guidance for FFP and cryoprecipitate thresholds.
+- NICE NG24 and AABB transfusion-reaction/hemovigilance reference material, used as an international safety layer for transfusion reaction recognition and first response in `theme-24`.
 - Surviving Sepsis Campaign Pediatric Guidelines 2026, used for pediatric sepsis where no current Ukrainian pediatric-sepsis standard is available in the DEC registry.
 - KDIGO 2024 CKD Guideline, used for renal-risk framing and medication stewardship where Ukrainian material is not perioperative-specific.
 - American Society of Hematology 2019 VTE prevention guideline for hospitalized surgical patients, used for perioperative thromboprophylaxis where no direct МОЗ perioperative prophylaxis standard is represented yet.
 - ASRA Pain Medicine 2025 antithrombotic/neuraxial guideline, used for the safety link between thromboprophylaxis and regional/neuraxial techniques.
 - ASRA Pain Medicine 2025 antithrombotic/regional guideline, used specifically for neuraxial, deep plexus, and deep peripheral block safety framing.
+- Supplemental LP antithrombotic table from user-provided image `антикоагулянты.jpg`, added as an English study table for single uncomplicated lumbar puncture only; it does not replace ASRA 2025 or local SOP for epidural/spinal anesthesia, catheters, traumatic puncture, or deep blocks.
 - Fifth Consensus Guidelines for PONV 2025 executive summary, Fourth Consensus Guidelines for PONV 2020, and the original Apfel simplified risk score for `PONV` risk stratification and rescue/prophylaxis framing.
-- ESICM 2023 ARDS guideline and ATS/ESICM/SCCM ARDS mechanical-ventilation guidance, used for adult hospital ICU `ARDS` respiratory-support framing where no direct adult МОЗ ARDS standard is represented.
+- DailyMed antiemetic labels for ondansetron, droperidol, metoclopramide, and scopolamine, used for practical adult `PONV` doses and contraindication anchors.
+- ESICM 2023 ARDS guideline, ATS/ESICM/SCCM ARDS mechanical-ventilation guidance, and the ATS 2024 ARDS guideline update, used for adult hospital ICU `ARDS` respiratory-support framing where no direct adult МОЗ ARDS standard is represented.
+- ARDSNet and EOLIA criteria, used as a practical study layer for `PEEP/FiO2` orientation and early `VV-ECMO` referral triggers in severe refractory `ARDS`; not treated as a local ECMO acceptance SOP.
+- Surviving Sepsis Campaign Adult Guidelines 2026, used for adult hospital sepsis source-control timing, antimicrobial stewardship, de-escalation, beta-lactam prolonged infusion, and respiratory-support statements in sepsis-associated `ARDS`.
 - Volpicelli et al. 2012 international evidence-based recommendations for point-of-care lung ultrasound and BLUE-protocol literature, used for hospital ED/ICU respiratory-failure ultrasound framing.
 - ICS/FICM 2019 guidance on transfer of the critically ill adult and BJA Education transfer review, used for hospital-stage transport of ventilated critically ill patients.
 - Via et al. 2014 international evidence-based recommendations for focused cardiac ultrasound, used for `FoCUS` as a limited clinician-performed cardiac ultrasound framework in emergency, ICU, and perioperative instability.
 - Focused Intensive Care Echo (`FICE`) literature, including Hall et al. 2017, used for ICU shock-oriented echo windows, clinical usefulness, and the limitation that many patients still need expert echocardiography.
 - Perioperative `FoCUS` literature, used for pre-induction screening of high-risk patients and post-induction/PACU hemodynamic instability framing.
+- SCAI SHOCK Stage Classification Expert Consensus Update 2022 and SCAI bedside checklist, used for cardiogenic-shock A-E staging and escalation language.
+- ESC 2022 non-cardiac surgery guideline, used for high-risk postoperative `hs-cTnT/hs-cTnI` monitoring at `24` and `48` hours and preoperative `BNP/NT-proBNP` risk framing.
+- Canadian Cardiovascular Society 2017 perioperative cardiac risk guideline, used for daily postoperative troponin surveillance for `48-72` hours in defined high-risk patients.
 - ISHLT Guidelines for the Care of Heart Transplant Recipients, published 2022 / JHLT 2023, used for early postoperative heart-transplant ICU framing, monitoring, perioperative care, immunosuppression/rejection, and prophylaxis categories where no current МОЗ/Шлапак transplant ICU material is represented.
 - ISHLT Summary of the Consensus Conference on Graft Dysfunction within the First 72 hours after Heart Transplantation, 2026, used for updated first-72-hour heart `PGD` framing and the note that practice remains center-specific.
 - ISHLT Working Group on Primary Lung Graft Dysfunction, 2016 consensus published 2017, used for lung-transplant `PGD` definition/grading context and early `24/48/72 h` surveillance framing.
 - ISHLT-endorsed consensus recommendations for maintenance immunosuppression in solid organ transplantation, 2022, used for the principle that immunosuppression continuity and drug-interaction stewardship must be handled with transplant-team involvement.
 - Local/UKP source `Protokol-peryoperatsijnogo-znebolennya.docx` (`Контроль періопераційного болю`, 2016), used for hospital postoperative-pain organization, pain-score targets, reassessment frequency, multimodal analgesia, `PCA/PCEA`, and catheter-analgesia monitoring. The file has an incomplete order number in the local copy; active legal status and drug-dose details require DEC/local-formulary verification before being treated as current clinical instructions.
 - Local/UKP source `Protokol-peryoperatsijnogo-znebolennya.docx` table material, used for `CPNB` catheter locations, wound infiltration, and peripheral-catheter analgesia examples. Doses are treated as study/reference material until local formulary verification.
+- ASA 2012 acute pain guideline, used as an international professional layer for multimodal perioperative acute-pain management, institutional policies, patient education and PCA/neuraxial monitoring principles.
+- FDA acetaminophen safety page and current DailyMed analgesic labels, used for adult acetaminophen ceiling and safety limits for morphine, fentanyl, tramadol, ketorolac, ketamine and dexmedetomidine.
+- FDA 2019 gabapentinoid safety communication, used for respiratory-depression risk with gabapentin/pregabalin in older adults, respiratory disease and co-prescription with opioids/CNS depressants.
+- EMA 2024 metamizole safety measures, used for agranulocytosis warning, symptom-triggered CBC and high-risk contraindication framing.
+- МОЗ/ДЭЦ `ГС 2024-1237-3` / order `№1237` severe head injury combat-trauma protocol, used for hospital-stage TBI GCS classification, neuro-resuscitation targets, osmotherapy doses, seizure prophylaxis/treatment options, and transport/aeromedical cautions. It is an active Ukrainian protocol translated from JTS and should be adapted to civilian OIT resources.
+- Brain Trauma Foundation Guidelines for the Management of Severe TBI, 4th edition, used as cross-check for SBP, ICP, CPP, steroid, seizure-prophylaxis and ventilation cautions.
+- American Epilepsy Society 2016 convulsive status epilepticus guideline and algorithm, used for time-based status phases and adult/general first-/second-line dosing where no current Ukrainian status-epilepticus dosing standard is represented.
 - WSES Bologna guidelines for adhesive small bowel obstruction, 2017 update published in 2018, used for hospital-stage acute bowel obstruction framing: non-operative trial boundaries, `NPO`, gastric/intestinal decompression, fluids/electrolytes, CT triggers, and urgent surgery signals. It is not a Ukrainian МОЗ standard.
 - UK Kidney Association Hyperkalaemia Guideline, October 2023, used for adult hospital hyperkalaemia severity, ECG/monitoring, myocardial protection, potassium shifting/removal, and post-insulin glucose safety framing where no current МОЗ electrolyte standard is represented.
 - European Clinical Practice Guideline on Hyponatraemia, 2014, used for symptom-oriented sodium correction and safe correction-rate limits where no current МОЗ hyponatraemia standard is represented.
+- KDIGO Clinical Practice Guideline for Acute Kidney Injury, 2012, used for urgent RRT escalation principles in AKI: life-threatening fluid/electrolyte/acid-base changes and clinical trends rather than isolated urea/creatinine thresholds. The 2026 KDIGO AKI/AKD update is still public-review draft material and is not treated as final guidance in `source.md`.
 - Шлапак, `Анестезіологія та інтенсивна терапія`, volumes 1-2. Tome 1 is used for regional-anesthesia principles, ultrasound/neurostimulation nerve localization, infiltration anesthesia, examples of upper/lower-limb peripheral blocks, water-electrolyte disorders, sodium/potassium abnormalities, acid-base interpretation, and perioperative electrolyte testing indications.
 - MSD/Merck Manual Professional acid-base disorder chapters, reviewed/revised in 2025, used as a narrow trusted source for acid-base classification, compensation checks, Winter formula, anion gap, delta gap, and mixed-disorder framing when local МОЗ/ДЭЦ materials do not provide a dedicated ICU interpretation algorithm.
 

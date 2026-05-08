@@ -82,7 +82,8 @@ describe("ReaderView Markdown tables", () => {
     expect(html).toContain('role="cell"');
     expect(html).toContain("Налоксон");
     expect(html).toContain("overflow-x-auto");
-    expect(html).toContain("minmax(360px,1.25fr)");
+    expect(html).toContain("minmax(400px,1.55fr)");
+    expect(html).toContain("minmax(180px,0.5fr)");
     expect(html).toContain("min-w-[1800px]");
     expect(html).toContain("theme-20-102");
   });
