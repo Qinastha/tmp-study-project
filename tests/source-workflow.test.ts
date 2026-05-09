@@ -318,7 +318,7 @@ describe("source workflow", () => {
     expect(markdown).toContain("3% NaCl | `150 мл за 20 минут`");
     expect(markdown).toContain("Показания к срочному диализу/заместительной почечной терапии");
     expect(markdown).toContain("рефрактерная гиперкалиемия");
-    expect(coverageMap).toContain("| `theme-18` | Partial, improved 2026-05-07 wave 4 |");
+    expect(coverageMap).toContain("| `theme-18` | Partial, improved 2026-05-09 wave 18 |");
 
     expect(markdown).not.toContain(
       "нужна локальная таблица дозовой коррекции `K`, `Na`, `Ca`, `Mg`, `P`, гипертонического NaCl, глюкозо-инсулиновой схемы и показаний к диализу.",
@@ -374,7 +374,7 @@ describe("source workflow", () => {
     expect(audit).toContain("ГС 2025-1555-4");
     expect(audit).toContain("WHO 2024 burn mass-casualty standards");
     expect(audit).toContain("`theme-16`");
-    expect(markdown).toContain("`TBSA` - total body surface area");
+    expect(markdown).toContain("`TBSA` или `ЗПОП` - total body surface area");
     expect(markdown).toContain("`COHb` - carboxyhemoglobin");
     expect(markdown).toContain("Ожоги: госпитальная оценка, инфузия и ОИТ");
     expect(markdown).toContain("взрослые и дети `>=14 лет` | `2 мл x кг x %TBSA`");
@@ -504,6 +504,308 @@ describe("source workflow", () => {
     ]) {
       expect(markdown).not.toContain(resolvedGap);
     }
+  });
+
+  it("keeps a 2026-05-09 wave 10 ledger and closes depth-monitoring and fluid table gaps", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 10 - depth monitoring and perioperative fluids");
+    expect(audit).toContain("Association of Anaesthetists 2021");
+    expect(audit).toContain("NICE CG174");
+    expect(audit).toContain("POQI 2024");
+
+    for (const themeKey of ["theme-02", "theme-08", "theme-09"]) {
+      expect(audit).toContain(`\`${themeKey}\``);
+    }
+
+    expect(markdown).toContain("MAC, пробуждение и выбор TIVA");
+    expect(markdown).toContain("MAC снижается с возрастом");
+    expect(markdown).toContain("N2O, бензодиазепины и опиоиды уменьшают потребность в летучем анестетике");
+    expect(markdown).toContain("Мониторинг глубины анестезии: BIS, MAC и клинический контекст");
+    expect(markdown).toContain("BIS `80-100`");
+    expect(markdown).toContain("BIS `40-60`");
+    expect(markdown).toContain("Инфузионная терапия: 5R и базовые взрослые ориентиры");
+    expect(markdown).toContain("25-30 мл/кг/сут");
+    expect(markdown).toContain("болюс `500 мл` менее чем за `15 минут`");
+    expect(markdown).toContain("GDFT: когда жидкость является пробой, а не автоматической реакцией");
+    expect(coverageMap).toContain("| `theme-08` | Partial, improved 2026-05-09 wave 10 |");
+    expect(coverageMap).toContain("| `theme-09` | Partial, improved 2026-05-09 wave 10 |");
+    expect(coverageMap).toContain("NICE CG174 intravenous fluid therapy");
+    expect(coverageMap).toContain("POQI 2024 perioperative fluid management");
+
+    for (const resolvedGap of [
+      "Мониторинг глубины анестезии требует отдельного источникового разбора.",
+      "goal-directed fluid therapy требует отдельного алгоритма.",
+      "Нужна отдельная инфузионная таблица: поддерживающая жидкость, ресусцитация, balanced crystalloids, ограничения при ХСН/ХБП/циррозе.",
+      "Нужны таблицы факторов, влияющих на MAC, пробуждение, контекст-зависимый период полувыведения и выбор TIVA.",
+    ]) {
+      expect(markdown).not.toContain(resolvedGap);
+    }
+  });
+
+  it("keeps a 2026-05-09 wave 11 ledger and closes neuraxial complication monitoring gaps", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 11 - neuraxial complication recognition and observation");
+    expect(audit).toContain("ASRA Practice Advisory on Neurologic Complications");
+    expect(audit).toContain("ASA 2021 PDPH");
+    expect(audit).toContain("`theme-04`");
+
+    expect(markdown).toContain("Осложнения нейроаксиальной анестезии: распознавание и первые действия");
+    expect(markdown).toContain("Высокий/тотальный спинальный блок");
+    expect(markdown).toContain("адреналин `10-100 мкг в/в`");
+    expect(markdown).toContain("боли в спине + моторный/сенсорный дефицит");
+    expect(markdown).toContain("вероятность восстановления быстро падает, когда время до декомпрессии приближается к `8 часам`");
+    expect(markdown).toContain("PDPH");
+    expect(markdown).toContain("осмотр анестезиолога в течение `24 часов`");
+    expect(markdown).toContain("Лист наблюдения за нейроаксиальной/катетерной аналгезией");
+    expect(markdown).toContain("моторика и чувствительность | Bromage/движение ног");
+    expect(coverageMap).toContain("| `theme-04` | Partial, improved 2026-05-09 wave 11 |");
+    expect(coverageMap).toContain("ASA 2021 statement on post-dural puncture headache");
+    expect(coverageMap).toContain("ASRA Practice Advisory on Neurologic Complications");
+
+    for (const resolvedGap of [
+      "Нужен отдельный локальный алгоритм осложнений нейроаксиальной анестезии: высокий блок, тотальный спинальный блок, эпидуральная гематома, инфекция, задержка мочи, постпункционная головная боль.",
+      "Нужен готовый лист наблюдения за нейроаксиальной/катетерной аналгезией: боль, моторика, чувствительность, место катетера, температура, признаки инфекции, `LAST`, суммарная доза ЛА.",
+    ]) {
+      expect(markdown).not.toContain(resolvedGap);
+    }
+  });
+
+  it("keeps a 2026-05-09 wave 12 ledger and closes peripheral catheter safety gaps", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 12 - peripheral block and catheter safety observation");
+    expect(audit).toContain("ASRA 2025 deep plexus/deep peripheral");
+    expect(audit).toContain("Protokol-peryoperatsijnogo-znebolennya.docx");
+    expect(audit).toContain("`theme-05`");
+
+    expect(markdown).toContain("Периферические блоки: compressible-site и anticoagulation decision");
+    expect(markdown).toContain("Deep plexus/deep peripheral block | вести как нейроаксиальную технику");
+    expect(markdown).toContain("Поверхностный compressible block | оценить возможность прямой компрессии");
+    expect(markdown).toContain("Лист наблюдения за периферической катетерной аналгезией");
+    expect(markdown).toContain("моторика и защита конечности | сила/движение");
+    expect(markdown).toContain("суммарная доза ЛА | концентрация, скорость, bolus");
+    expect(coverageMap).toContain("| `theme-05` | Partial, improved 2026-05-09 wave 12 |");
+    expect(coverageMap).toContain("ASRA 2025 deep plexus/deep peripheral");
+
+    for (const resolvedGap of [
+      "Требует локального SOP: применить ASRA-таблицу из темы 4 к поверхностным compressible blocks и глубоким некомпрессируемым блокам, чтобы в назначении было видно, где нужен нейроаксиальный уровень осторожности.",
+      "Нужен готовый лист наблюдения за периферической катетерной аналгезией: боль, моторика, чувствительность, место катетера, температура, признаки инфекции, `LAST`, суммарная доза ЛА.",
+    ]) {
+      expect(markdown).not.toContain(resolvedGap);
+    }
+  });
+
+  it("keeps a 2026-05-09 wave 13 ledger and closes PACU discharge-failure escalation gaps", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 13 - PACU recovery and failed-discharge escalation");
+    expect(audit).toContain("ASA Standards for Postanesthesia Care 2024");
+    expect(audit).toContain("Новий_клінічний_протокол_Седація_при_ЕФГДС_2025.docx");
+    expect(audit).toContain("`theme-10`");
+
+    expect(markdown).toContain("`PACU` - post-anesthesia care unit");
+    expect(markdown).toContain("PACU: мониторинг, задержка выписки и эскалация");
+    expect(markdown).toContain("handover в PACU | анестезиологическая команда передает");
+    expect(markdown).toContain("Aldrete `<8`");
+    expect(markdown).toContain("SpO2<90% несмотря на оксигенотерапию, апноэ");
+    expect(markdown).toContain("налоксон/флумазенил");
+    expect(markdown).toContain("не выписывать домой без сопровождающего");
+    expect(markdown).toContain("запрет вождения и решений минимум `24 часа`");
+    expect(coverageMap).toContain("| `theme-10` | Partial, improved 2026-05-09 wave 13 |");
+    expect(coverageMap).toContain("ASA Standards for Postanesthesia Care 2024");
+
+    expect(markdown).not.toContain("PACU discharge failure escalation");
+  });
+
+  it("keeps a 2026-05-09 wave 14 ledger and refreshes post-ROSC targets from MOH 1259", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 14 - CPR and post-ROSC source refresh");
+    expect(audit).toContain("ГС 2024-1259-2");
+    expect(audit).toContain("ГС 2024-1259-1");
+    expect(audit).toContain("`theme-11`");
+
+    expect(markdown).toContain("Post-ROSC: цели интенсивной терапии по МОЗ №1259");
+    expect(markdown).toContain("оксигенация | избегать гипоксемии и гипероксии");
+    expect(markdown).toContain("SaO2 `94-98%`, PaO2 `75-100 мм рт.ст.`");
+    expect(markdown).toContain("PaCO2 `35-45 мм рт.ст.`");
+    expect(markdown).toContain("дыхательный объем `6-8 мл/кг` идеальной массы тела");
+    expect(markdown).toContain("MAP `>65 мм рт.ст.`");
+    expect(markdown).toContain("диурез `>0,5 мл/кг/ч`");
+    expect(markdown).toContain("не допускать гипертермии `>37,7 C` первые `72 часа`");
+    expect(markdown).toContain("гликемия `7,8-10,0 ммоль/л`");
+    expect(markdown).toContain("первичное `PCI` в пределах `120 минут`");
+    expect(markdown).toContain("не назначать рутинно ГКС или профилактические противосудорожные препараты");
+    expect(coverageMap).toContain("| `theme-11` | Covered for existing source material, refreshed 2026-05-09 wave 14 |");
+    expect(coverageMap).toContain("MOH/DEC `ГС 2024-1259-1/-2` CPR standards");
+
+    expect(markdown).not.toContain("ROSC source refresh");
+  });
+
+  it("keeps a 2026-05-09 wave 15 ledger and closes pulmonary embolism reperfusion gaps", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 15 - pulmonary embolism reperfusion and RV support");
+    expect(audit).toContain("Клінічний протокол ТЕЛА 2025.docx");
+    expect(audit).toContain("ESC/ERS 2019 pulmonary embolism guideline");
+    expect(audit).toContain("`theme-13`");
+
+    expect(markdown).toContain("ТЭЛА: стратификация, реперфузия и поддержка ПЖ");
+    expect(markdown).toContain("сАД `<90 мм рт.ст.`");
+    expect(markdown).toContain("снижение сАД `>=40 мм рт.ст.` `>=15 минут`");
+    expect(markdown).toContain("альтеплаза `100 мг за 2 часа`");
+    expect(markdown).toContain("ускоренный режим rtPA `0,6 мг/кг за 15 минут`, максимум `50 мг`");
+    expect(markdown).toContain("не делать первичный full-dose thrombolysis рутинно");
+    expect(markdown).toContain("эноксапарин `1 мг/кг 2 раза/сут`");
+    expect(markdown).toContain("НФГ `80-100 ЕД/кг` болюс");
+    expect(markdown).toContain("PEEP `<=8 см H2O`");
+    expect(markdown).toContain("норадреналин `0,2-1,0 мкг/кг/мин`");
+    expect(markdown).toContain("добутамин `2-20 мкг/кг/мин`");
+    expect(coverageMap).toContain("| `theme-13` | Partial, improved 2026-05-09 wave 15 |");
+    expect(coverageMap).toContain("PE reperfusion/RV-support table added");
+
+    expect(markdown).not.toContain("pulmonary embolism reperfusion");
+  });
+
+  it("keeps a 2026-05-09 wave 16 ledger and adds component-dose guardrails", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 16 - blood component dose guardrails");
+    expect(audit).toContain("NICE NG24 Blood transfusion");
+    expect(audit).toContain("AABB 2023 RBC transfusion guideline");
+    expect(audit).toContain("AABB/ICTMG 2025 platelet transfusion guideline");
+    expect(audit).toContain("`theme-24`");
+
+    expect(markdown).toContain("Компоненты крови: практические дозы и контроль эффекта");
+    expect(markdown).toContain("ЭМ у взрослого без активного кровотечения | `1 доза`");
+    expect(markdown).toContain("после каждой дозы - клиническая переоценка и Hb");
+    expect(markdown).toContain("Тромбоциты | обычно `1 доза`");
+    expect(markdown).toContain("не переливать больше одной дозы рутинно");
+    expect(markdown).toContain("clinically significant bleeding");
+    expect(markdown).toContain("тромбоциты `<30 x 10^9/л`");
+    expect(markdown).toContain("critical site");
+    expect(markdown).toContain("до `100 x 10^9/л`");
+    expect(markdown).toContain("СЗП | фиксированную универсальную дозу не выводить из NICE");
+    expect(markdown).toContain("ПЧ ratio/АЧТЧ ratio `>1,5`");
+    expect(markdown).toContain("Криопреципитат | взрослым `2 pools`");
+    expect(markdown).toContain("детям `5-10 мл/кг`, максимум `2 pools`");
+    expect(markdown).toContain("фибриноген `<1,5 г/л`");
+    expect(markdown).toContain("фибриноген `<1,0 г/л`");
+    expect(markdown).toContain("фактический объем компонента ООКБ");
+    expect(coverageMap).toContain("| `theme-24` | Partial, improved 2026-05-09 wave 16 |");
+    expect(coverageMap).toContain("component-dose guardrails added");
+
+    expect(markdown).not.toContain("blood component dose guardrails");
+  });
+
+  it("keeps a 2026-05-09 wave 17 ledger and adds pharmacology label-dose anchors", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 17 - anesthesia pharmacology label-dose anchors");
+    expect(audit).toContain("DailyMed vecuronium bromide injection label");
+    expect(audit).toContain("DailyMed cisatracurium besylate injection label");
+    expect(audit).toContain("DailyMed neostigmine methylsulfate injection label");
+    expect(audit).toContain("DailyMed fentanyl, morphine, and nalbuphine labels");
+    expect(audit).toContain("`theme-22`");
+
+    expect(markdown).toContain("Опиоиды и миорелаксанты: label-dose anchors");
+    expect(markdown).toContain("Фентанил | adult start `50-100 мкг`");
+    expect(markdown).toContain("Морфин | direct IV analgesia `0,1-0,2 мг/кг`");
+    expect(markdown).toContain("Налбуфин | adult analgesia `10 мг` на `70 кг`");
+    expect(markdown).toContain("Векуроний | интубационный bolus `0,08-0,1 мг/кг`");
+    expect(markdown).toContain("maintenance `0,01-0,015 мг/кг`");
+    expect(markdown).toContain("Цисатракурий | intubating bolus `0,15-0,2 мг/кг`");
+    expect(markdown).toContain("инфузия сначала `3 мкг/кг/мин`, затем обычно `1-2 мкг/кг/мин`");
+    expect(markdown).toContain("Неостигмин | reversal `0,03-0,07 мг/кг в/в`");
+    expect(markdown).toContain("не превышать `0,07 мг/кг` или `5 мг`");
+    expect(markdown).toContain("атропин примерно `15 мкг/кг` или гликопирролат примерно `10 мкг/кг`");
+    expect(markdown).toContain("Трамадол оставить в теме боли/формуляра");
+    expect(coverageMap).toContain("| `theme-22` | Partial, improved 2026-05-09 wave 17 |");
+    expect(coverageMap).toContain("opioid/NMBA label-dose anchors added");
+
+    expect(markdown).not.toContain("Дозы фентанила, морфина, налбуфина/трамадола, векурония, цисатракурия и неостигмина внести");
+  });
+
+  it("keeps a 2026-05-09 wave 18 ledger and adds Ca/Mg/P plus refeeding guardrails", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 18 - calcium magnesium phosphate and refeeding");
+    expect(audit).toContain("NICE CG32 Nutrition support for adults");
+    expect(audit).toContain("Merck Manual Professional hypocalcemia, hypomagnesemia and hypophosphatemia chapters");
+    expect(audit).toContain("Endocrine Society 2022 hypercalcemia of malignancy guideline");
+    expect(audit).toContain("`theme-18`");
+
+    expect(markdown).toContain("Ca/Mg/P и refeeding: практический ОИТ-контроль");
+    expect(markdown).toContain("BMI `<16 кг/м2`");
+    expect(markdown).toContain("little/no intake `>10 дней`");
+    expect(markdown).toContain("nutrition support максимум `10 ккал/кг/сут`");
+    expect(markdown).toContain("экстремальный риск `5 ккал/кг/сут`");
+    expect(markdown).toContain("тиамин `200-300 мг/сут`");
+    expect(markdown).toContain("K `2-4 ммоль/кг/сут`, phosphate `0,3-0,6 ммоль/кг/сут`, Mg `0,2 ммоль/кг/сут в/в`");
+    expect(markdown).toContain("Гипокальциемия с тетанией/аритмией | кальций в/в и поиск причины | calcium gluconate `10%` `10 мл в/в за 10 минут`");
+    expect(markdown).toContain("Гипомагниемия тяжелая/симптомная | magnesium sulfate в/в | magnesium sulfate `2-4 г в/в за 5-10 минут`");
+    expect(markdown).toContain("Гипофосфатемия тяжелая `<1 мг/дл` (`<0,32 ммоль/л`) или симптомная");
+    expect(markdown).toContain("Гиперкальциемия malignancy severe `>14 мг/дл` (`>3,5 ммоль/л`)");
+    expect(coverageMap).toContain("| `theme-18` | Partial, improved 2026-05-09 wave 18 |");
+    expect(coverageMap).toContain("Ca/Mg/P and refeeding guardrails added");
+
+    expect(markdown).not.toContain("отдельные схемы коррекции `Ca`, `Mg`, `P` и рефидинга");
   });
 
   it("uses a practical toxicology antidote table with source status", () => {

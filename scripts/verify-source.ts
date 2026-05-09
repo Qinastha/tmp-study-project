@@ -217,6 +217,10 @@ function main() {
     if (lastHeading !== "Пробелы к заполнению") {
       throw new Error(`${theme.themeKey} must keep "Пробелы к заполнению" as its last subsection.`);
     }
+
+    if (headingTexts.at(-2) !== "Источники и спорные места") {
+      throw new Error(`${theme.themeKey} must place "Источники и спорные места" immediately before gaps.`);
+    }
   }
 
   for (const code of REQUIRED_KROK_CODES) {

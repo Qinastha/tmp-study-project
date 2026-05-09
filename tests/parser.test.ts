@@ -97,6 +97,7 @@ describe("parseStudyMarkdown", () => {
       expect(headings).toEqual(expect.arrayContaining(requiredHeadings));
       expect(headings).not.toContain("Покрывает коды Крок 3");
       expect(headings).not.toContain("Что обязан проговорить на экзамене");
+      expect(headings.at(-2)).toBe("Источники и спорные места");
       expect(headings.at(-1)).toBe("Пробелы к заполнению");
     }
 
