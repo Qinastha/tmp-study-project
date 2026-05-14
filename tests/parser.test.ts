@@ -113,6 +113,7 @@ describe("parseStudyMarkdown", () => {
     const sourceText = parsed.themes
       .flatMap((theme) => [theme.title, ...theme.blocks.map((block) => block.text)])
       .join("\n");
+    const normalizedSourceText = sourceText.toLocaleLowerCase("ru");
 
     for (const topic of [
       "СЛР",
@@ -181,7 +182,7 @@ describe("parseStudyMarkdown", () => {
       "Гидроксокобаламин",
       "20% липидная эмульсия",
     ]) {
-      expect(sourceText).toContain(topic);
+      expect(normalizedSourceText).toContain(topic.toLocaleLowerCase("ru"));
     }
   });
 

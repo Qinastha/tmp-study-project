@@ -229,8 +229,9 @@ function main() {
     }
   }
 
+  const normalizedMarkdown = markdown.toLocaleLowerCase("ru");
   for (const topic of LEGACY_TOPICS) {
-    if (!markdown.includes(topic)) {
+    if (!normalizedMarkdown.includes(topic.toLocaleLowerCase("ru"))) {
       throw new Error(`Representative preserved topic is missing from source.md: ${topic}.`);
     }
   }

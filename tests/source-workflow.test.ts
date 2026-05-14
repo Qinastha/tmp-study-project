@@ -121,6 +121,91 @@ describe("source workflow", () => {
     expect(coverageMap).toContain("/Users/qinastha/Downloads/Учеба/Анест");
   });
 
+  it("keeps a living source-block audit for the sequential module review", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/source-block-audit-2026-05-14.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+
+    expect(audit).toContain("Living Source Block Audit - 2026-05-14");
+    expect(audit).toContain("Verdict: PASS WITH WARNINGS");
+    expect(audit).toContain("Completed modules: `25/25`");
+    expect(audit).toContain("Canonical reader source: `content/source.md`");
+    expect(audit).toContain("Source priority: active МОЗ/ДЭЦ -> Шлапак -> local ООКБ documents -> narrow trusted international sources");
+    expect(audit).toContain("Abbreviation review: no exact duplicate abbreviations after normalization");
+    expect(audit).toContain("technical MCP/Supabase/PDF-flow details stay out of reader-source");
+    expect(audit).toContain("Detailed Pass 1 - service sections and themes 1-5");
+    expect(audit).toContain("Reworded colloquial decision language in themes `1-5` without changing clinical numbers");
+    expect(audit).toContain("Detailed Pass 2 - themes 6-10");
+    expect(audit).toContain("Reworded obstetric, pain, monitoring, infusion, nutrition, antibiotic and postoperative language in themes `6-10` without changing clinical numbers");
+    expect(audit).toContain("Detailed Pass 3 - themes 11-15");
+    expect(audit).toContain("Reworded CPR, crisis, respiratory ICU, sepsis and cardiac ICU language in themes `11-15` without changing clinical numbers");
+    expect(audit).toContain("Detailed Pass 4 - themes 16-20");
+    expect(audit).toContain("Reworded trauma, neuro-ICU, metabolic, pediatric and operating-room safety language in themes `16-20` without changing clinical numbers");
+    expect(audit).toContain("Detailed Pass 5 - themes 21-25");
+    expect(audit).toContain("Reworded local-anesthetic, pharmacology, toxicology, transfusion and final-review language in themes `21-25` without changing clinical numbers");
+    expect(audit).toContain("Detailed Pass 6 - cross-cutting editorial sweep");
+    expect(audit).toContain("Reworded remaining cross-module conversational markers without changing clinical numbers");
+
+    for (const themeKey of Array.from({ length: 25 }, (_, index) => `theme-${String(index + 1).padStart(2, "0")}`)) {
+      expect(audit).toContain(`| \`${themeKey}\` | done |`);
+    }
+  });
+
+  it("keeps all Krok modules in the agreed reader-frame order", () => {
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const lines = markdown.split(/\r?\n/);
+    const modules: Array<{ title: string; headings: string[] }> = [];
+    let current: { title: string; headings: string[] } | null = null;
+
+    for (const line of lines) {
+      const h2 = line.match(/^##\s+(.+)$/);
+      if (h2) {
+        current = /^\d+\.\s+/.test(h2[1]) ? { title: h2[1], headings: [] } : null;
+        if (current) modules.push(current);
+        continue;
+      }
+
+      const h3 = line.match(/^###\s+(.+)$/);
+      if (h3 && current) current.headings.push(h3[1]);
+    }
+
+    expect(modules).toHaveLength(25);
+
+    for (const readerModule of modules) {
+      const required = [
+        "Ключевые акценты",
+        "Практический алгоритм",
+        "Красные цифры/пороговые значения",
+        "Клинический материал",
+        "Источники и спорные места",
+        "Пробелы к заполнению",
+      ];
+      const indexes = required.map((heading) => readerModule.headings.indexOf(heading));
+
+      expect(indexes.every((index) => index >= 0), readerModule.title).toBe(true);
+      expect(indexes, readerModule.title).toEqual([...indexes].sort((left, right) => left - right));
+      expect(readerModule.headings.at(-1), readerModule.title).toBe("Пробелы к заполнению");
+      expect(
+        readerModule.headings.indexOf("Источники и спорные места"),
+        readerModule.title,
+      ).toBe(readerModule.headings.length - 2);
+    }
+  });
+
+  it("keeps abbreviation glossary entries unique after normalization", () => {
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const glossary = markdown.split("## Словарь аббревиатур")[1]?.split("## 1. ")[0] ?? "";
+    const entries = [...glossary.matchAll(/^- `?([^`\s—-]+(?:\s*\/\s*[^`\s—-]+)?)`? - .+$/gm)].map(
+      (match) => match[1].toUpperCase().replace(/\s+/g, "").replace(/Ё/g, "Е"),
+    );
+    const duplicates = entries.filter((entry, index) => entries.indexOf(entry) !== index);
+
+    expect(entries.length).toBeGreaterThan(150);
+    expect(duplicates).toEqual([]);
+  });
+
   it("keeps a pre-reseed source audit for the current Markdown content", () => {
     const auditPath = path.resolve(process.cwd(), "docs/source-audit-2026-04-21.md");
 
@@ -318,7 +403,8 @@ describe("source workflow", () => {
     expect(markdown).toContain("3% NaCl | `150 мл за 20 минут`");
     expect(markdown).toContain("Показания к срочному диализу/заместительной почечной терапии");
     expect(markdown).toContain("рефрактерная гиперкалиемия");
-    expect(coverageMap).toContain("| `theme-18` | Partial, improved 2026-05-09 wave 18 |");
+    expect(coverageMap).toContain("| `theme-18` | Partial, improved 2026-05-14 wave 24 |");
+    expect(coverageMap).toContain("urgent `K`, symptomatic `Na`, Ca/Mg/P and refeeding guardrails added");
 
     expect(markdown).not.toContain(
       "нужна локальная таблица дозовой коррекции `K`, `Na`, `Ca`, `Mg`, `P`, гипертонического NaCl, глюкозо-инсулиновой схемы и показаний к диализу.",
@@ -349,7 +435,8 @@ describe("source workflow", () => {
     expect(markdown).toContain("Фосфенитоин/фенитоин | `20 мг PE/кг`");
     expect(markdown).toContain("Кома и транспорт пациента на ИВЛ");
     expect(markdown).toContain("EtCO2 обязателен");
-    expect(coverageMap).toContain("| `theme-17` | Partial, improved 2026-05-07 wave 5 |");
+    expect(coverageMap).toContain("| `theme-17` | Partial, improved 2026-05-11 wave 21 |");
+    expect(coverageMap).toContain("adult and pediatric TBI/status guardrails added");
 
     for (const resolvedGap of [
       "ЧМТ как самостоятельный Krok-блок.",
@@ -483,7 +570,7 @@ describe("source workflow", () => {
     expect(markdown).toContain("`CICO` - cannot intubate, cannot oxygenate");
     expect(markdown).toContain("`eFONA` - emergency front-of-neck airway");
     expect(markdown).toContain("Предикторы трудных дыхательных путей");
-    expect(markdown).toContain("проблема | предикторы | что сделать до индукции | источник/статус");
+    expect(markdown).toContain("проблема | предикторы | подготовка до индукции | источник/статус");
     expect(markdown).toContain("Трудная масочная вентиляция | ожирение, OSA");
     expect(markdown).toContain("Трудная ларингоскопия/интубация | ограниченное открывание рта");
     expect(markdown).toContain("Трудный `SAD`/rescue oxygenation | малое открывание рта");
@@ -637,7 +724,8 @@ describe("source workflow", () => {
     expect(markdown).toContain("налоксон/флумазенил");
     expect(markdown).toContain("не выписывать домой без сопровождающего");
     expect(markdown).toContain("запрет вождения и решений минимум `24 часа`");
-    expect(coverageMap).toContain("| `theme-10` | Partial, improved 2026-05-09 wave 13 |");
+    expect(coverageMap).toContain("| `theme-10` | Partial, improved 2026-05-11 wave 23 |");
+    expect(coverageMap).toContain("PACU recovery monitoring, failed-discharge escalation");
     expect(coverageMap).toContain("ASA Standards for Postanesthesia Care 2024");
 
     expect(markdown).not.toContain("PACU discharge failure escalation");
@@ -736,10 +824,80 @@ describe("source workflow", () => {
     expect(markdown).toContain("фибриноген `<1,5 г/л`");
     expect(markdown).toContain("фибриноген `<1,0 г/л`");
     expect(markdown).toContain("фактический объем компонента ООКБ");
-    expect(coverageMap).toContain("| `theme-24` | Partial, improved 2026-05-09 wave 16 |");
+    expect(coverageMap).toContain("| `theme-24` | Partial, improved 2026-05-14 wave 26 |");
     expect(coverageMap).toContain("component-dose guardrails added");
 
     expect(markdown).not.toContain("blood component dose guardrails");
+  });
+
+  it("keeps a 2026-05-14 wave 26 ledger and adds Ukrainian transfusion traceability guardrails", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 26 - Ukrainian transfusion traceability and hemovigilance guardrails");
+    expect(audit).toContain("МОЗ №2225/2022");
+    expect(audit).toContain("МОЗ №818/2023");
+    expect(audit).toContain("Український центр трансплант-координації transfusion forms");
+    expect(audit).toContain("`theme-24`");
+
+    expect(markdown).toContain("Украинская рамка: traceability, гемонадзор и хранение");
+    expect(markdown).toContain("обоснование назначения + информирование пациента/согласие");
+    expect(markdown).toContain("идентификация дозы крови/компонента");
+    expect(markdown).toContain("если компонент не перелит - подтвердить его дальнейшее местонахождение");
+    expect(markdown).toContain("название компонента, объем/масса/количество клеток");
+    expect(markdown).toContain("уникальный номер донации");
+    expect(markdown).toContain("эритроцитарные компоненты `2-6 °C`");
+    expect(markdown).toContain("тромбоцитарные компоненты `20-24 °C`, до `5 суток`");
+    expect(markdown).toContain("плазменные компоненты: `36 месяцев` при `-25 °C` и ниже");
+    expect(markdown).toContain("каждая серьезная неблагоприятная трансфузионная реакция расследуется");
+    expect(markdown).toContain("заявка на трансфузию");
+    expect(markdown).toContain("отчет о неблагоприятной реакции/случае");
+    expect(markdown).not.toContain("Внести украинские правила назначения, хранения и документирования компонентов крови после сверки");
+    expect(coverageMap).toContain("| `theme-24` | Partial, improved 2026-05-14 wave 26 |");
+    expect(coverageMap).toContain("Ukrainian traceability, hemovigilance, labeling and storage guardrails added");
+  });
+
+  it("keeps a 2026-05-14 wave 27 PDF-source evaluation and pediatric airway anchors", () => {
+    const evaluationPath = path.resolve(process.cwd(), "docs/pdf-source-evaluation-2026-05-14.md");
+
+    expect(fs.existsSync(evaluationPath)).toBe(true);
+
+    const evaluation = fs.readFileSync(evaluationPath, "utf8");
+    const audit = fs.readFileSync("docs/gap-fill-audit-2026-05-07.md", "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    for (const fileName of [
+      "Алгоритм_дій_дитячого_анестезіолога_2020_1.pdf",
+      "Контроль_периопераційного_болю_1.pdf",
+      "Невідкладні стани в педіатрії 2020.pdf",
+      "Невідкладні стани в педіатрії 2023.pdf",
+    ]) {
+      expect(evaluation).toContain(fileName);
+      expect(audit).toContain(fileName);
+    }
+
+    expect(evaluation).toContain("not a local SOP");
+    expect(evaluation).toContain("not a final active MOH order");
+    expect(evaluation).toContain("educational source");
+    expect(audit).toContain("Wave 27 - local PDF packet evaluation and pediatric airway/fluid anchors");
+    expect(markdown).toContain("Педиатрическое оборудование: учебные размеры и инфузионный минимум");
+    expect(markdown).toContain("LMA/ГМ size 1 | `<6,5 кг`");
+    expect(markdown).toContain("LMA/ГМ size 2 | `6,5-20 кг`");
+    expect(markdown).toContain("Neonatal ETT | `<1000 г/<28 нед`: `2,5`");
+    expect(markdown).toContain("Maintenance fluid | `4-2-1`");
+    expect(markdown).toContain("Премедикационные таблицы | пособие содержит дозовые строки");
+    expect(markdown).toContain("Учебные ориентиры из пособия внесены, но не являются локальной карточкой");
+    expect(markdown).not.toContain(
+      "Размеры ETT/LMA, fasting и премедикацию нужно заменить на локальные карточки",
+    );
+    expect(coverageMap).toContain("| `theme-19` | Partial, improved 2026-05-14 wave 27 |");
+    expect(coverageMap).toContain("pediatric airway device-size and `4-2-1` fluid educational anchors added");
   });
 
   it("keeps a 2026-05-09 wave 17 ledger and adds pharmacology label-dose anchors", () => {
@@ -802,10 +960,212 @@ describe("source workflow", () => {
     expect(markdown).toContain("Гипомагниемия тяжелая/симптомная | magnesium sulfate в/в | magnesium sulfate `2-4 г в/в за 5-10 минут`");
     expect(markdown).toContain("Гипофосфатемия тяжелая `<1 мг/дл` (`<0,32 ммоль/л`) или симптомная");
     expect(markdown).toContain("Гиперкальциемия malignancy severe `>14 мг/дл` (`>3,5 ммоль/л`)");
-    expect(coverageMap).toContain("| `theme-18` | Partial, improved 2026-05-09 wave 18 |");
+    expect(coverageMap).toContain("| `theme-18` | Partial, improved 2026-05-14 wave 24 |");
     expect(coverageMap).toContain("Ca/Mg/P and refeeding guardrails added");
 
     expect(markdown).not.toContain("отдельные схемы коррекции `Ca`, `Mg`, `P` и рефидинга");
+  });
+
+  it("keeps a 2026-05-11 wave 19 ledger and adds postoperative thromboprophylaxis guardrails", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 19 - postoperative thromboprophylaxis guardrails");
+    expect(audit).toContain("ASH 2019 VTE prevention guideline");
+    expect(audit).toContain("NICE NG89");
+    expect(audit).toContain("`theme-10`");
+
+    expect(markdown).toContain("Послеоперационная тромбопрофилактика: операция, риск и выписка");
+    expect(markdown).toContain("Каждая строка ниже - международный ориентир, а не локальное назначение ООКБ.");
+    expect(markdown).toContain("major surgery, acceptable bleeding risk | mechanical or pharmacological prophylaxis");
+    expect(markdown).toContain("major abdominal/pelvic cancer surgery | рассмотреть extended prophylaxis после выписки");
+    expect(markdown).toContain("до `28 дней` `LMWH`, если риск `ВТЭ` выше риска кровотечения");
+    expect(markdown).toContain("elective hip replacement | выбрать один из procedure-specific вариантов");
+    expect(markdown).toContain("LMWH `10 дней` + aspirin `75-150 мг` еще `28 дней`");
+    expect(markdown).toContain("IVC filter | не использовать как рутинную профилактику `ВТЭ`");
+    expect(markdown).toContain("нейроаксиальный катетер/регионарная аналгезия | не вводить и не отменять антикоагулянт автоматически");
+    expect(markdown).toContain("Требует локального SOP: утвердить карточку ООКБ по послеоперационной тромбопрофилактике");
+    expect(coverageMap).toContain("| `theme-10` | Partial, improved 2026-05-11 wave 23 |");
+    expect(coverageMap).toContain("NICE NG89 and ASH 2019 international surgery/discharge guardrails added");
+  });
+
+  it("keeps a 2026-05-11 wave 20 ledger and adds bowel-obstruction source-control guardrails", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 20 - bowel obstruction source-control and antibiotic guardrails");
+    expect(audit).toContain("WSES Bologna guidelines 2017/2018");
+    expect(audit).toContain("Surgical Infection Society 2024 intra-abdominal infection guideline");
+    expect(audit).toContain("IDSA 2024 complicated intra-abdominal infection guideline");
+    expect(audit).toContain("`theme-18`");
+
+    expect(markdown).toContain("Непроходимость: source control и антибиотики");
+    expect(markdown).toContain("simple suspected ASBO без ишемии/перитонита | non-operative trial");
+    expect(markdown).toContain("`NPO`, декомпрессия, IV fluids/electrolytes, nutrition/aspiration prevention");
+    expect(markdown).toContain("ориентир наблюдения до `72 часов`");
+    expect(markdown).toContain("closed-loop/ишемия/перфорация/перитонит/sepsis | не затягивать source control");
+    expect(markdown).toContain("покрыть enteric gram-negative + anaerobes");
+    expect(markdown).toContain("после adequate source control | оценивать клиническое улучшение");
+    expect(markdown).toContain("обычно не больше `4 суток` (`96 часов`)");
+    expect(markdown).toContain("Требует локального SOP: маршрут при кишечной непроходимости");
+    expect(markdown).not.toContain("Нужно добавить локальный хирургический маршрут при непроходимости и антибактериальную тактику");
+    expect(coverageMap).toContain("| `theme-18` | Partial, improved 2026-05-14 wave 24 |");
+    expect(coverageMap).toContain("bowel obstruction source-control and antimicrobial guardrails added");
+  });
+
+  it("keeps a 2026-05-11 wave 21 ledger and adds pediatric neurocritical guardrails", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 21 - pediatric neurocritical TBI and status guardrails");
+    expect(audit).toContain("Brain Trauma Foundation pediatric severe TBI 3rd edition");
+    expect(audit).toContain("AES 2016 convulsive status epilepticus guideline");
+    expect(audit).toContain("`theme-17`");
+
+    expect(markdown).toContain("Педиатрическая нейроИТ: severe TBI и эпистатус");
+    expect(markdown).toContain("Детская ЧМТ требует отдельной возрастной тактики");
+    expect(markdown).toContain("ICP threshold | лечить внутричерепную гипертензию с целью `ICP <20 мм рт. ст.`");
+    expect(markdown).toContain("CPP | минимум `40 мм рт. ст.`; практический диапазон `40-50 мм рт. ст.`");
+    expect(markdown).toContain("3% NaCl bolus | `2-5 мл/кг за 10-20 минут`");
+    expect(markdown).toContain("23,4% NaCl | `0,5 мл/кг`, максимум `30 мл`");
+    expect(markdown).toContain("не допускать sustained Na `>170 мЭкв/л`");
+    expect(markdown).toContain("не делать профилактическую severe hyperventilation `PaCO2 <30 мм рт. ст.`");
+    expect(markdown).toContain("ранние post-traumatic seizures в пределах `7 дней`");
+    expect(markdown).toContain("не доказано преимущество levetiracetam над phenytoin");
+    expect(markdown).toContain("Требует локального SOP: педиатрический нейро-ОИТ маршрут");
+    expect(markdown).not.toContain("Педиатрическая нейроИТ требует отдельной сверки с детскими TBI/status epilepticus источниками.");
+    expect(coverageMap).toContain("| `theme-17` | Partial, improved 2026-05-11 wave 21 |");
+    expect(coverageMap).toContain("pediatric severe TBI ICP/CPP/hyperosmolar/seizure guardrails added");
+  });
+
+  it("keeps a 2026-05-11 wave 22 ledger and closes sodium-channel bicarbonate guardrails", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 22 - sodium bicarbonate for sodium-channel cardiotoxicity");
+    expect(audit).toContain("J Med Toxicol 2016 sodium bicarbonate QRS review");
+    expect(audit).toContain("NCBI Bookshelf StatPearls Sodium Channel Blocker Toxicity");
+    expect(audit).toContain("`theme-23`");
+
+    expect(markdown).toContain("Натрия бикарбонат при wide QRS / sodium-channel cardiotoxicity");
+    expect(markdown).toContain("wide `QRS`/натриевоканальная кардиотоксичность | `Натрия бикарбонат` | `1-2 мЭкв/кг в/в` болюсно");
+    expect(markdown).toContain("ориентир для старта - `QRS >100 мс`");
+    expect(markdown).toContain("повторять болюсы до сужения `QRS`/стабилизации гемодинамики");
+    expect(markdown).toContain("цель pH `7,45-7,55`, не выше `7,55`");
+    expect(markdown).toContain("bupropion/propranolol/taxine | эффект бикарбоната непредсказуем или слабый");
+    expect(markdown).toContain("фенитоин/фосфенитоин не выбирать для судорог при sodium-channel blocker toxicity");
+    expect(markdown).not.toContain("современная токсикология широких `QRS` остается `Требует сверки`.");
+    expect(markdown).not.toContain("Отдельно сверить современные показания и дозирование натрия бикарбоната при широких `QRS`/натриевоканальной кардиотоксичности.");
+    expect(coverageMap).toContain("| `theme-23` | Partial, improved 2026-05-11 wave 22 |");
+    expect(coverageMap).toContain("sodium bicarbonate wide-QRS guardrails added");
+  });
+
+  it("keeps a 2026-05-11 wave 23 ledger and adds pediatric and obstetric PONV guardrails", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 23 - pediatric and obstetric PONV guardrails");
+    expect(audit).toContain("Fourth Consensus Guidelines for PONV 2020");
+    expect(audit).toContain("ERAS Society cesarean intraoperative care 2025 update");
+    expect(audit).toContain("LactMed ondansetron, dexamethasone and metoclopramide");
+    expect(audit).toContain("`theme-10`");
+
+    expect(markdown).toContain("PONV: дети и акушерство");
+    expect(markdown).toContain("`POVOC` - postoperative vomiting in children score");
+    expect(markdown).toContain("`ERAC` - enhanced recovery after cesarean delivery");
+    expect(markdown).toContain("`5-HT3` - serotonin 5-hydroxytryptamine type 3 receptor");
+    expect(markdown).toContain("POVOC: операция `>30 минут`, возраст `>3 лет`, личный/семейный анамнез `POV/PONV`, strabismus surgery");
+    expect(markdown).toContain("Ондансетрон | `50-100 мкг/кг`, максимум `4 мг`");
+    expect(markdown).toContain("Дексаметазон | `150 мкг/кг`, максимум `5 мг`");
+    expect(markdown).toContain("Дроперидол | `10-15 мкг/кг`, максимум `1,25 мг`");
+    expect(markdown).toContain("кесарево сечение / ERAC | antiemetic prophylaxis");
+    expect(markdown).toContain("Ондансетрон postpartum/cesarean | `4-8 мг в/в`");
+    expect(markdown).toContain("метоклопрамид не использовать как galactagogue");
+    expect(markdown).toContain("Требует локального SOP: детско-акушерская `PONV`-карта");
+    expect(markdown).not.toContain("Требует сверки: детские и акушерские режимы `PONV` по локальному формуляру и доступности препаратов.");
+    expect(coverageMap).toContain("| `theme-10` | Partial, improved 2026-05-11 wave 23 |");
+    expect(coverageMap).toContain("pediatric and obstetric PONV guardrails added");
+  });
+
+  it("keeps a 2026-05-14 wave 24 ledger and adds renal hepatic medication-safety guardrails", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 24 - renal hepatic medication-safety guardrails");
+    expect(audit).toContain("KDIGO 2024 CKD Guideline");
+    expect(audit).toContain("МОЗ 2024-1734");
+    expect(audit).toContain("AASLD 2022 decompensated cirrhosis practice guidance");
+    expect(audit).toContain("`theme-01`");
+    expect(audit).toContain("`theme-18`");
+
+    expect(markdown).toContain("ХБП, диализ и цирроз: лекарственная безопасность перед анестезией");
+    expect(markdown).toContain("eGFR/CrCl + электролиты + текущий тренд");
+    expect(markdown).toContain("NSAID/нефротоксичный стек");
+    expect(markdown).toContain("не назначать `НПВП` как рутинную послеоперационную аналгезию");
+    expect(markdown).toContain("если ацетаминофен/парацетамол выбран при декомпенсированном циррозе");
+    expect(markdown).toContain("план отмены и возобновления должен быть записан");
+    expect(markdown).toContain("ХБП/печень: medication stewardship в ОИТ");
+    expect(markdown).toContain("точную дозу должен давать формуляр/инструкция");
+    expect(markdown).not.toContain("Нужна локальная таблица коррекции доз препаратов при `ХБП`, диализе и печеночной недостаточности.");
+    expect(markdown).not.toContain("Нужна локальная таблица коррекции доз при ХБП, диализе и печеночной недостаточности.");
+    expect(coverageMap).toContain("| `theme-01` | Partial, improved 2026-05-14 wave 24 |");
+    expect(coverageMap).toContain("| `theme-18` | Partial, improved 2026-05-14 wave 24 |");
+    expect(coverageMap).toContain("renal/hepatic medication-safety guardrails added");
+  });
+
+  it("keeps a 2026-05-14 wave 25 ledger and refreshes the final rapid review from filled modules", () => {
+    const auditPath = path.resolve(process.cwd(), "docs/gap-fill-audit-2026-05-07.md");
+
+    expect(fs.existsSync(auditPath)).toBe(true);
+
+    const audit = fs.readFileSync(auditPath, "utf8");
+    const markdown = fs.readFileSync(SOURCE_MARKDOWN_PATH, "utf8");
+    const coverageMap = fs.readFileSync("docs/curriculum-coverage-map.md", "utf8");
+
+    expect(audit).toContain("Wave 25 - final rapid review refresh");
+    expect(audit).toContain("`theme-25`");
+    expect(audit).toContain("no new clinical facts");
+    expect(markdown).toContain("Быстрое финальное повторение: обновленный срез");
+    expect(markdown).toContain("LAST | `20%` липидная эмульсия");
+    expect(markdown).toContain("ARDS | Vt `4-8 мл/кг PBW`");
+    expect(markdown).toContain("ТЭЛА high-risk | сАД `<90 мм рт.ст.`");
+    expect(markdown).toContain("Гиперкалиемия | `K >=6,5 ммоль/л`");
+    expect(markdown).toContain("Педиатрическая ЧМТ | `ICP <20 мм рт. ст.`");
+    expect(markdown).toContain("ХБП/цирроз | `eGFR/CrCl + электролиты + текущий тренд`");
+    expect(markdown).toContain("Компоненты крови | не переливать только по лабораторному показателю");
+    expect(markdown).not.toContain("После заполнения педиатрии, фармакологии, УЗ и электролитов нужно обновить этот повторитель.");
+    expect(coverageMap).toContain("| `theme-25` | Partial, improved 2026-05-14 wave 25 |");
+    expect(coverageMap).toContain("rapid review refreshed from filled high-risk modules");
   });
 
   it("uses a practical toxicology antidote table with source status", () => {
@@ -857,6 +1217,81 @@ describe("source workflow", () => {
       "обычной болью",
       "банальный `цефтриаксон`",
       "лечу не только цифру",
+      "думать о",
+      "когда думать",
+      "по привычке",
+      "RSI любой ценой",
+      "не мелочь",
+      "простой вопрос",
+      "когда проснется",
+      "в одиночку",
+      "как обычная послеоперационная жалоба",
+      "без хаоса",
+      "ноль боли любой ценой",
+      "не ждать судорог",
+      "легко пропустить",
+      "теоретически подходящего препарата",
+      "не только проблема анальгетика",
+      "не нужно начинать любой ценой",
+      "антибиотик нужно начать вовремя, но не бездумно",
+      "почти уже остановка",
+      "наблюдать после СЛР",
+      "последняя отчаянная мера",
+      "вслепую",
+      "как получилось",
+      "черную коробку",
+      "100% любой ценой",
+      "заливать пациента литрами",
+      "обычную гипоксемию",
+      "умирает от",
+      "стреляния антибиотиком",
+      "не ждать гипоперфузии",
+      "обычного послеоперационного больного",
+      "не годится",
+      "действительно нужно помнить",
+      "может закончиться коллапсом",
+      "`длинную` операцию",
+      "не косметика",
+      "длинных рассуждений",
+      "не потерять давление",
+      "обрушивать давление",
+      "лечить мозг",
+      "наблюдение за неврологией",
+      "уменьшенную взрослую таблицу",
+      "отменили и забыли",
+      "лечить фосфор",
+      "не ждать роста мочевины",
+      "достаточно помнить",
+      "взрослые алгоритмы нельзя просто уменьшать",
+      "лекарственной гонки",
+      "не является уменьшенным взрослым",
+      "формально правильной схемы",
+      "не бюрократия",
+      "заставляет команду",
+      "местные анестетики блокируют",
+      "не обезболивает и не усыпляет",
+      "не триггерная анестезия",
+      "угадывания яда",
+      "механически `разбудить`",
+      "не являются `инфузионным раствором`",
+      "не переливать `для цифры`",
+      "где не надо выдумывать",
+      "что не забыть",
+      "как минимум помнить",
+      "`на глаз`",
+      "`разбудить`",
+      "разбудить пациента",
+      "импровизация",
+      "держать в памяти",
+      "важно помнить",
+      "бездумно",
+      "не драматично",
+      "главные решения",
+      "поводом к ранней консультации",
+      "долечивать живот количеством дней",
+      "обычного взрослого",
+      "обычному уровню реагирования",
+      "обычному возрастному уровню",
     ]) {
       expect(markdown).not.toContain(phrase);
     }
